@@ -1,0 +1,21 @@
+# https://github.com/dapr/docs/tree/master/howto/configure-redis#configuration
+# https://github.com/dapr/dapr/issues/363
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: cache
+spec:
+  type: state.redis
+  metadata:
+  - name: redisPassword
+    secretKeyRef:
+      name: redis
+      key: redis-password
+  - name: redisHost
+    value: "redis-master.default.svc.cluster.local:6379"
+  - name: enableTLS
+    value: "false"
+  - name: actorStateStore
+    value: "true"
+auth:
+    secretStore: kubernetes
