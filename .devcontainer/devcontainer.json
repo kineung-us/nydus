@@ -34,7 +34,7 @@
 
 	"runArgs": [
 		// Uncomment the next line to use Docker from inside the container. See https://aka.ms/vscode-remote/samples/docker-in-docker for details.
-    "-v", "${env:HOME}/.ssh/:/root/.ssh",
+    "-v", "${env:HOME}/.ssh/:/home/vscode/.ssh",
     // "-v", "${env:HOME}/.kube/config:/root/.kube/config",
   ],
 
