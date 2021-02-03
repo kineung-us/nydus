@@ -1,0 +1,37 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nydus-sender
+  labels:
+    app: nydus-sender
+spec:
+  selector:
+    matchLabels:
+      app: nydus-sender
+  template:
+    metadata:
+      labels:
+        app: nydus-sender
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "nydus-sender"
+        dapr.io/app-port: "8080"
+        dapr.io/config: "tracing"
+        dapr.io/log-as-json: "true"
+        dapr.io/log-level: "debug"
+    spec:
+      containers:
+      - name: service
+        image: mrchypark/nydus-sender
+        ports:
+        - containerPort: 8080
+        env:
+        - name: PORT
+          value: "8080"
+        - name: DAPR_HTTP_PORT
+          value: "3500"
+        - name: PUBSUB_NAME
+          value: "http-events"
+        - name: TOPIC_NAME
+          value: "messages"
