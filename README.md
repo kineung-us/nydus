@@ -43,7 +43,8 @@ sequenceDiagram
   activate enter
   enter ->> messagebus: message publish
   Note right of enter: hostIP, targetName required
-  messagebus ->> eventlogger: subscribe topic
+  messagebus ->>+ eventlogger: subscribe topic
+  eventlogger ->>- messagebus: request logged event
   messagebus ->> sender: subscribe topic
   activate sender
   sender ->>+ target: message request
@@ -51,8 +52,9 @@ sequenceDiagram
   target ->>- sender: return response
   sender ->> messagebus: response publish
   deactivate sender
-  messagebus ->> eventlogger: subscribe response
-  messagebus ->> callback: subscribe response
+  messagebus ->>+ eventlogger: subscribe response
+  eventlogger ->>- messagebus: response logged event
+  messagebus ->> callback: subscribe response logged
   activate callback
   callback ->> enter: return response
   deactivate callback

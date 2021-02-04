@@ -3,115 +3,74 @@ package main
 import (
 	"context"
 	"log"
-	"os/signal"
-	"sync"
-	"syscall"
-	"time"
-
-	"net/http"
 	"os"
 	"strings"
 
+	dapr "github.com/dapr/go-sdk/client"
 	"github.com/dapr/go-sdk/service/common"
 	daprd "github.com/dapr/go-sdk/service/grpc"
 	"github.com/pkg/errors"
 )
 
-const (
-	primeStateKey = "high-prime"
-)
-
 var (
-	logger     = log.New(os.Stdout, "", 0)
-	reqProcDur time.Duration
+	logger = log.New(os.Stdout, "", 0)
+	client dapr.Client
 
-	address         = getEnvVar("ADDRESS", ":60033")
-	processDuration = getEnvVar("PROCESS_DURATION", "500ms")
-	pubSubName      = getEnvVar("PUBSUB_NAME", "autoscaling-pubsub")
-	topicName       = getEnvVar("TOPIC_NAME", "metrics")
+	serviceAddress = getEnvVar("ADDRESS", ":60011")
+
+	sourcePubSubName = getEnvVar("SOURCE_PUBSUB_NAME", "messagebus")
+	sourceTopicName  = getEnvVar("SOURCE_TOPIC_NAME", "http")
+
+	targetBindingName = getEnvVar("TARGET_BINDING", "http-binding")
 )
 
 func main() {
-	// Dapr service
-	s, err := daprd.NewService(address)
+	// create Dapr service
+	s, err := daprd.NewService(serviceAddress)
 	if err != nil {
-		logger.Fatalf("failed to start the service: %v", err)
+		log.Fatalf("failed to start the server: %v", err)
 	}
 
-	d, err := time.ParseDuration(processDuration)
+	c, err := dapr.NewClient()
 	if err != nil {
-		logger.Fatalf("invalid parameter (PROCESS_DURATION) must be a duration): %s - %v", processDuration, err)
+		log.Fatalf("failed to create Dapr client: %v", err)
 	}
-	reqProcDur = d
+	client = c
+	defer client.Close()
 
-	var mux sync.Mutex
-	var successCount int64 = 1
-	var errorCount int64 = 0
+	// add handler to the service
+	sub := &common.Subscription{PubsubName: sourcePubSubName, Topic: sourceTopicName}
+	s.AddTopicEventHandler(sub, eventHandler)
 
-	resultCh := make(chan bool)
-	startTime := time.Now()
-
-	go func() {
-		tickerCh := time.NewTicker(5 * time.Second).C
-		for {
-			select {
-			case r := <-resultCh:
-				mux.Lock()
-				if r {
-					successCount++
-				} else {
-					errorCount++
-				}
-				mux.Unlock()
-			case <-tickerCh:
-				var avg float64 = 0
-				if successCount > 0 {
-					avg = float64(successCount) / time.Since(startTime).Seconds()
-				}
-				logger.Printf("received: %10d, %3d errors - avg %3.0f/sec", successCount, errorCount, avg)
-			}
-		}
-	}()
-
-	// define subscription
-	subscription := &common.Subscription{
-		PubsubName: pubSubName,
-		Topic:      topicName,
+	// start the server to handle incoming events
+	if err := s.Start(); err != nil {
+		log.Fatalf("server error: %v", err)
 	}
-
-	// subscribe
-	if err := s.AddTopicEventHandler(subscription, func(ctx context.Context, e *common.TopicEvent) (retry bool, err error) {
-		if err := processRequest(ctx, e.Data); err != nil {
-			logger.Printf("error processing request: %v", err)
-			resultCh <- false
-			return true, errors.Wrap(err, "error processing request")
-		}
-		resultCh <- true
-		return false, nil
-	}); err != nil {
-		logger.Fatalf("error adding topic subscription: %v", err)
-	}
-
-	// handle signals
-	done := make(chan os.Signal, 1)
-	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
-
-	// Start
-	go func() {
-		if err := s.Start(); err != nil && err != http.ErrServerClosed {
-			logger.Fatalf("error starting service: %v", err)
-		}
-	}()
-
-	// Finish
-	<-done
 }
 
-// does some computing to keep the process busy organically
-func processRequest(ctx context.Context, in interface{}) error {
-	tickerCh := time.NewTicker(reqProcDur).C
-	<-tickerCh
-	return nil
+func eventHandler(ctx context.Context, e *common.TopicEvent) (retry bool, err error) {
+	logger.Printf("Event - PubsubName:%s, Topic:%s, ID:%s", e.PubsubName, e.Topic, e.ID)
+
+	d, ok := e.Data.([]byte)
+	if !ok {
+		return false, errors.Errorf("invalid event data type: %T", e.Data)
+	}
+
+	// content := &dapr.BindingInvocation{
+	// 	Data: d,
+	// 	Metadata: map[string]string{
+	// 		"record-id":       e.ID,
+	// 		"conversion-time": time.Now().UTC().Format(time.RFC3339),
+	// 	},
+	// 	Name:      targetBindingName,
+	// 	Operation: "create",
+	// }
+
+	// if err := client.InvokeOutputBinding(ctx, content); err != nil {
+	// 	return true, errors.Wrap(err, "error invoking target binding")
+	// }
+
+	return false, nil
 }
 
 func getEnvVar(key, fallbackValue string) string {
