@@ -29,7 +29,8 @@
     "golang.Go",
     "ms-azuretools.vscode-docker",
     "ms-kubernetes-tools.vscode-kubernetes-tools",
-    "bierner.markdown-mermaid"
+    "bierner.markdown-mermaid",
+    "tabnine.tabnine-vscode"
 	],
 
 	"runArgs": [
