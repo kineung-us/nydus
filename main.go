@@ -10,6 +10,7 @@ import (
 	"github.com/dapr/go-sdk/service/common"
 	daprd "github.com/dapr/go-sdk/service/http"
 	"github.com/guiguan/caster"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -22,7 +23,7 @@ var (
 	requestTopic = getEnvVar("SOURCE_TOPIC_NAME", "req-service")
 	resultTopic  = getEnvVar("RESULT_TOPIC_NAME", "res-service")
 
-	targetRoot   = getEnvVar("TARGET_ROOT", "app-id")
+	targetRoot = getEnvVar("TARGET_ROOT", "app-id")
 )
 
 func main() {
@@ -44,13 +45,13 @@ func main() {
 		PubsubName: pubSubName,
 		Topic:      requestTopic,
 	}
-	s.AddTopicEventHandler(reqsub, reqSub)
+	s.AddTopicEventHandler(reqsub, reqSub(c))
 
 	ressub := &common.Subscription{
 		PubsubName: pubSubName,
 		Topic:      resultTopic,
 	}
-	s.AddTopicEventHandler(ressub, resultSub)
+	s.AddTopicEventHandler(ressub, resultSub(p))
 	// start the server to handle incoming events
 	log.Printf("starting server at %s...", serviceAddress)
 	if err := s.Start(); err != nil {
@@ -58,12 +59,11 @@ func main() {
 	}
 }
 
-
-func invoke(c dapr.Client, p caster.Caster) func {
-	return func (ctx context.Context, in *common.InvocationEvent) (out *common.Content, err error) {
+func invoke(c dapr.Client, p *caster.Caster) func(ctx context.Context, in *common.InvocationEvent) (out *common.Content, err error) {
+	return func(ctx context.Context, in *common.InvocationEvent) (out *common.Content, err error) {
 		ch, ok := p.Sub(nil, 1)
 		if !ok {
-			return errors.Errorf("invalid event data type")
+			return nil, errors.Errorf("invalid event data type")
 		}
 		defer p.Unsub(ch)
 
@@ -73,7 +73,7 @@ func invoke(c dapr.Client, p caster.Caster) func {
 		)
 
 		if err := c.PublishEvent(ctx, pubSubName, pubSubName, b); err != nil {
-			return errors.Wrap(err, "error publishing content")
+			return nil, errors.Wrap(err, "error publishing content")
 		}
 
 		// TODO 양식 맞춰서 고쳐야 함
@@ -88,8 +88,8 @@ func invoke(c dapr.Client, p caster.Caster) func {
 	}
 }
 
-func callback(p caster.Caster) func {
-	return func (ctx context.Context, in *common.InvocationEvent) (out *common.Content, err error) {
+func callback(p *caster.Caster) func(ctx context.Context, in *common.InvocationEvent) (out *common.Content, err error) {
+	return func(ctx context.Context, in *common.InvocationEvent) (out *common.Content, err error) {
 
 		logger.Printf(
 			"Invocation (ContentType:%s, Verb:%s, QueryString:%s, Data:%s)",
@@ -101,11 +101,11 @@ func callback(p caster.Caster) func {
 			Body: c.Body(),
 		})
 		return c.SendString("send!")
-	}	
+	}
 }
 
-func resultSub(p caster.Caster) func {
-	func (ctx context.Context, e *common.TopicEvent) (retry bool, err error) {
+func resultSub(p *caster.Caster) func(ctx context.Context, e *common.TopicEvent) (retry bool, err error) {
+	return func(ctx context.Context, e *common.TopicEvent) (retry bool, err error) {
 		// ip가 호스트와 같은지 확인
 		// 같으면 caster로 보냄
 		// 다르면 post로 ip에 요청함
@@ -113,8 +113,8 @@ func resultSub(p caster.Caster) func {
 	}
 }
 
-func reqSub(c dapr.Client) func {
-	func (ctx context.Context, e *common.TopicEvent) (retry bool, err error) {
+func reqSub(c dapr.Client) func(ctx context.Context, e *common.TopicEvent) (retry bool, err error) {
+	return func(ctx context.Context, e *common.TopicEvent) (retry bool, err error) {
 		// req를 post로 url에 전달
 		// targetRoot + path 등등 수행
 	}
