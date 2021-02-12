@@ -98,10 +98,15 @@ func publish(cst *caster.Caster) func(c *fiber.Ctx) error {
 			c.Get("Content-Type")
 		}
 
+		hd := map[string]string{}
+		c.Request().Header.VisitAll(func(key, value []byte) {
+			hd[string(key)] = string(value)
+		})
+
 		r := dataRequested{
 			Method:  c.Method(),
 			URL:     c.BaseURL() + c.OriginalURL(),
-			Headers: c.Request().Header.Header(),
+			Headers: hd,
 			Body:    c.Body(),
 		}
 
@@ -260,10 +265,10 @@ type publishData struct {
 }
 
 type dataRequested struct {
-	Method  string `json:"method"`
-	URL     string `json:"url"`
-	Headers []byte `json:"headers"`
-	Body    []byte `json:"body"`
+	Method  string            `json:"method"`
+	URL     string            `json:"url"`
+	Headers map[string]string `json:"headers"`
+	Body    json.RawMessage   `json:"body"`
 }
 
 // FastPostByte  do  POST request via fasthttp
