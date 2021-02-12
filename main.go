@@ -1,8 +1,8 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
+	jsonstd "encoding/json"
+	"log"
 	"net/url"
 	"os"
 	"os/signal"
@@ -10,6 +10,8 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	jsoniter "github.com/json-iterator/go"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
@@ -19,6 +21,7 @@ import (
 )
 
 var (
+	json           = jsoniter.ConfigCompatibleWithStandardLibrary
 	serviceAddress = getEnvVar("ADDRESS", ":5000")
 	myIP           = getEnvVar("MY_POD_IP", "")
 
@@ -26,12 +29,15 @@ var (
 	sourceTopic  = getEnvVar("SOURCE_TOPIC_NAME", "req-service")
 	pubsubTTL    = getEnvVar("PUBSUB_TTL", "60")
 	pubURL       = "http://localhost:3500/v1.0/publish/" + sourcePubSub + "/" + sourceTopic
-	headersList  = getEnvVar("PROPAGATE_HEADER_LIST", "dialog-session-id, dialog-transaction-id")
+
+	// TODO: 설계가 필요함. tid를 meta로 옮길지 등등이 필요함.
+	headersList = getEnvVar("PROPAGATE_HEADER_LIST", "dialog-session-id, dialog-transaction-id")
 
 	targetRoot = getEnvVar("TARGET_ROOT", "http://localhost:3000")
 
 	invokeTimeout   = getEnvVar("INVOKE_TIMEOUT", "60")
-	publishTIimeout = getEnvVar("PUBLISH_TIMEOUT", "60")
+	publishTimeout  = getEnvVar("PUBLISH_TIMEOUT", "5")
+	callbackTimeout = getEnvVar("CALLBACK_TIMEOUT", "5")
 )
 
 func main() {
@@ -48,7 +54,7 @@ func main() {
 	})
 
 	app.Use(logger.New(logger.Config{
-		Format:     "${time} ${status} - ${method} ${path}\n",
+		Format:     "{time: ${time}, route: ${route}, status: ${status}, latency: ${latency}, body: ${body}, resBody: ${resBody}}\n",
 		TimeFormat: time.RFC3339,
 		TimeZone:   "UTC",
 	}))
@@ -61,12 +67,15 @@ func main() {
 
 	// https://v1-rc3.docs.dapr.io/developing-applications/building-blocks/pubsub/howto-publish-subscribe/
 	app.Get("/dapr/subscribe", func(c *fiber.Ctx) error {
-		sub := []subscribe{}
-		sub = append(sub, subscribe{
+		sub := []struct {
+			Pubsubname string `json:"pubsubname"`
+			Topic      string `json:"topic"`
+			Route      string `json:"route"`
+		}{{
 			Pubsubname: sourcePubSub,
 			Topic:      sourceTopic,
 			Route:      "/invoke",
-		})
+		}}
 		return c.JSON(sub)
 	})
 
@@ -76,7 +85,7 @@ func main() {
 
 	go func() {
 		if err := app.Listen(serviceAddress); err != nil {
-			fmt.Errorf("error to start")
+			log.Panic(err)
 		}
 	}()
 
@@ -200,7 +209,7 @@ func newCustomEvent(pub *publishData, targetTopic string) *customEvent {
 		PubsubName:      sourcePubSub,
 		// 왜인지 모르겠지만, customEvent 여도 자신들 스키마로만 전달 가능.
 		// 그래서 publishData의 meta로 이동
-		// Time:            time.Now().In("UTC").Format(time.RFC3339),
+		// Time:            time.Now().Format(time.RFC3339),
 	}
 }
 
@@ -224,10 +233,10 @@ type publishData struct {
 }
 
 type reuestedData struct {
-	Method  string            `json:"method"`
-	URL     string            `json:"url"`
-	Headers map[string]string `json:"headers"`
-	Body    json.RawMessage   `json:"body"`
+	Method  string             `json:"method"`
+	URL     string             `json:"url"`
+	Headers map[string]string  `json:"headers"`
+	Body    jsonstd.RawMessage `json:"body"`
 }
 
 // callbackHandler start
@@ -243,7 +252,7 @@ func callbackHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 			Body:    c.Body(),
 		})
 		if !ok {
-			return fiber.NewError(782, "Custom error message")
+			return fiber.NewError(500, "Caster delivery failed")
 		}
 		return c.SendStatus(204)
 	}
@@ -269,8 +278,8 @@ type message struct {
 // hostIP 에게 post로 전달
 // 그리고 종료
 func invokeHandler(c *fiber.Ctx) error {
-	body := c.Body()
-	fmt.Println(string(body))
+	// body := c.Body()
+
 	// req를 post로 url에 전달
 	// targetRoot + path 등등 수행
 
