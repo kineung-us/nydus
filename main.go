@@ -1,85 +1,131 @@
 package main
 
 import (
-	"context"
-	"log"
+	"fmt"
+	"net/url"
 	"os"
+	"os/signal"
+	"strconv"
 	"strings"
+	"syscall"
+	"time"
 
-	dapr "github.com/dapr/go-sdk/client"
-	"github.com/dapr/go-sdk/service/common"
-	daprd "github.com/dapr/go-sdk/service/http"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/internal/uuid"
+	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/google/uuid"
 	"github.com/guiguan/caster"
-	"github.com/pkg/errors"
+	"github.com/valyala/fasthttp"
 )
 
 var (
-	logger = log.New(os.Stdout, "", 0)
-	client dapr.Client
-
 	serviceAddress = getEnvVar("ADDRESS", ":5000")
+	myIP           = getEnvVar("MY_POD_IP", "")
 
-	pubSubName   = getEnvVar("SOURCE_PUBSUB_NAME", "messagebus")
-	requestTopic = getEnvVar("SOURCE_TOPIC_NAME", "req-service")
-	resultTopic  = getEnvVar("RESULT_TOPIC_NAME", "res-service")
+	sourcePubSub = getEnvVar("SOURCE_PUBSUB_NAME", "pubsub")
+	sourceTopic  = getEnvVar("SOURCE_TOPIC_NAME", "req-service")
+	pubsubTTL    = getEnvVar("PUBSUB_TTL", "60")
+	pubURL       = "http://localhost:3500/v1.0/publish/" + sourcePubSub + "/" + sourceTopic
+	headersList  = getEnvVar("PROPAGATE_HEADER_LIST", "dialog-session-id, dialog-transaction-id")
 
-	targetRoot = getEnvVar("TARGET_ROOT", "app-id")
+	targetRoot = getEnvVar("TARGET_ROOT", "http://localhost:3000")
+
+	invokeTimeout   = getEnvVar("INVOKE_TIMEOUT", "60")
+	publishTIimeout = getEnvVar("PUBLISH_TIMEOUT", "60")
 )
 
 func main() {
-	// create Dapr service
-	s := daprd.NewService(serviceAddress)
+	version := "nydus-v0.0.1"
 
-	p := caster.New(nil)
-	c, err := dapr.NewClient()
-	if err != nil {
-		log.Fatalf("failed to create Dapr client: %v", err)
-	}
-	client = c
-	defer client.Close()
+	// if myIP == "" {
+	// 	panic("MY_POD_IP is required.")
+	// }
 
-	s.AddServiceInvocationHandler("invoke", invoke(c, p))
-	s.AddServiceInvocationHandler("callback", callback(p))
+	app := fiber.New(fiber.Config{
+		CaseSensitive: true,
+		StrictRouting: true,
+		ServerHeader:  version,
+	})
 
-	reqsub := &common.Subscription{
-		PubsubName: pubSubName,
-		Topic:      requestTopic,
-	}
-	s.AddTopicEventHandler(reqsub, reqSub(c))
+	app.Use(logger.New())
 
-	ressub := &common.Subscription{
-		PubsubName: pubSubName,
-		Topic:      resultTopic,
-	}
-	s.AddTopicEventHandler(ressub, resultSub(p))
-	// start the server to handle incoming events
-	log.Printf("starting server at %s...", serviceAddress)
-	if err := s.Start(); err != nil {
-		log.Fatalf("server error: %v", err)
-	}
+	cst := caster.New(nil)
+
+	// /debug/pprof
+	// app.Use(pprof.New())
+	// app.Get("/dashboard", monitor.New())
+
+	// https://v1-rc3.docs.dapr.io/developing-applications/building-blocks/pubsub/howto-publish-subscribe/
+	app.Get("/dapr/subscribe", func(c *fiber.Ctx) error {
+		sub := []subscribe{}
+		sub = append(sub, subscribe{
+			Pubsubname: sourcePubSub,
+			Topic:      sourceTopic,
+			Route:      "/invoke",
+		})
+		return c.JSON(sub)
+	})
+
+	app.Post("/publish/:target/*", publish(cst))
+	app.Post("/callback/:id", callback(cst))
+	app.Post("/invoke", invoke)
+
+	go func() {
+		if err := app.Listen(serviceAddress); err != nil {
+			fmt.Errorf("error to start")
+		}
+	}()
+
+	c := make(chan os.Signal, 1)                                    // 1Create channel to signify a signal being sent
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGINT) // When an interrupt or termination signal is sent, notify the channel
+
+	_ = <-c // This blocks the main thread until an interrupt is received
+	_ = app.Shutdown()
 }
 
-func invoke(c dapr.Client, p *caster.Caster) func(ctx context.Context, in *common.InvocationEvent) (out *common.Content, err error) {
-	return func(ctx context.Context, in *common.InvocationEvent) (out *common.Content, err error) {
-		ch, ok := p.Sub(nil, 1)
+// 요청을 받으면
+// 요청 처리 쪽에 퍼블리쉬
+// 		이게 post 요청인데 publish body로 해야 함.
+// 응답 기다림
+// caster로 오면 응답 전달
+// 종료
+func publish(cst *caster.Caster) func(c *fiber.Ctx) error {
+	return func(c *fiber.Ctx) error {
+
+		fmt.Println(c.Params("*"))
+
+		if headersList != "" {
+			c.Get("Content-Type")
+		}
+
+		r := dataRequested{
+			Method:  c.Method(),
+			URL:     c.BaseURL() + c.OriginalURL(),
+			Headers: c.Request().Header.Header(),
+			Body:    c.Body(),
+		}
+
+		pub := publishData{
+			Order:    &r,
+			Callback: myIP,
+		}
+
+		ce := newCustomEvent(&pub, c.Params("target"))
+
+		// Publishrequestevent
+
+		ch, ok := cst.Sub(nil, 1)
 		if !ok {
-			return nil, errors.Errorf("invalid event data type")
+			// https://docs.gofiber.io/api/fiber#newerror
+			return fiber.NewError(782, "Custom error message")
 		}
-		defer p.Unsub(ch)
+		defer cst.Unsub(ch)
 
-		logger.Printf(
-			"Invocation (ContentType:%s, Verb:%s, QueryString:%s, Data:%s)",
-			in.ContentType, in.Verb, in.QueryString, string(in.Data),
-		)
+		body := []byte{}
 
-		if err := c.PublishEvent(ctx, pubSubName, pubSubName, b); err != nil {
-			return nil, errors.Wrap(err, "error publishing content")
-		}
-
-		// TODO 양식 맞춰서 고쳐야 함
 		for m := range ch {
 			t := m.(message).ID
-			if c.Params("id") == t {
+			if ce.ID == t {
 				body = m.(message).Body
 				break
 			}
@@ -88,36 +134,60 @@ func invoke(c dapr.Client, p *caster.Caster) func(ctx context.Context, in *commo
 	}
 }
 
-func callback(p *caster.Caster) func(ctx context.Context, in *common.InvocationEvent) (out *common.Content, err error) {
-	return func(ctx context.Context, in *common.InvocationEvent) (out *common.Content, err error) {
-
-		logger.Printf(
-			"Invocation (ContentType:%s, Verb:%s, QueryString:%s, Data:%s)",
-			in.ContentType, in.Verb, in.QueryString, string(in.Data),
-		)
-
-		p.Pub(message{
-			ID:   c.Params("id"),
+// 요청이 들어오면
+// go 루틴 caster로 id 기준 전달
+// 받았음 리턴
+func callback(cst *caster.Caster) func(c *fiber.Ctx) error {
+	return func(c *fiber.Ctx) error {
+		ok := cst.TryPub(message{
+			ID:   c.Params("eid"),
 			Body: c.Body(),
 		})
+		if !ok {
+			return fiber.NewError(782, "Custom error message")
+		}
 		return c.SendString("send!")
 	}
 }
 
-func resultSub(p *caster.Caster) func(ctx context.Context, e *common.TopicEvent) (retry bool, err error) {
-	return func(ctx context.Context, e *common.TopicEvent) (retry bool, err error) {
-		// ip가 호스트와 같은지 확인
-		// 같으면 caster로 보냄
-		// 다르면 post로 ip에 요청함
-		// 이러고 종료
-	}
+// subscribe 주소임
+// 요청 바디를 받아서
+// go 루틴 시작 (아래로)
+// 받았다는 응답 하고 마무리
+// go 루틴 시작하는데 이제부터 아래
+// root 주소로 주소 조립후
+// post 수행
+// 기다림
+// 응답을 받아서
+// hostIP 에게 post로 전달
+// 그리고 종료
+func invoke(c *fiber.Ctx) error {
+	body := c.Body()
+	fmt.Println(string(body))
+
+	go func() {
+		time.Sleep(10 * time.Second)
+		fmt.Println("go done")
+	}()
+
+	// req를 post로 url에 전달
+	// targetRoot + path 등등 수행
+
+	// Requesttotarget()
+	// Callbacktosource()
+
+	return c.JSON(fiber.Map{"success": true})
 }
 
-func reqSub(c dapr.Client) func(ctx context.Context, e *common.TopicEvent) (retry bool, err error) {
-	return func(ctx context.Context, e *common.TopicEvent) (retry bool, err error) {
-		// req를 post로 url에 전달
-		// targetRoot + path 등등 수행
-	}
+type message struct {
+	ID   string
+	Body []byte
+}
+
+type subscribe struct {
+	Pubsubname string `json:"pubsubname"`
+	Topic      string `json:"topic"`
+	Route      string `json:"route"`
 }
 
 func getEnvVar(key, fallbackValue string) string {
@@ -125,4 +195,97 @@ func getEnvVar(key, fallbackValue string) string {
 		return strings.TrimSpace(val)
 	}
 	return fallbackValue
+}
+
+func newCustomEvent(pub *publishData, targetTopic string) *customEvent {
+	return &customEvent{
+		ID:              uuid.New(),
+		Source:          "nydus",
+		Type:            "com.dapr.event.sent",
+		SpecVersion:     "1.0",
+		DataContentType: "application/json",
+		Data:            pub,
+		Topic:           targetTopic,
+		PubsubName:      sourcePubSub,
+		Time:            time.Now().Format(time.RFC3339),
+	}
+}
+
+type customEvent struct {
+	ID              uuid.UUID    `json:"id"`
+	Source          string       `json:"source"`
+	Type            string       `json:"type"`
+	SpecVersion     string       `json:"specversion"`
+	DataContentType string       `json:"datacontenttype"`
+	Data            *publishData `json:"data"`
+	Topic           string       `json:"topic"`
+	PubsubName      string       `json:"pubsubname"`
+	Time            string       `json:"Time"`
+}
+
+type publishData struct {
+	Order    *dataRequested         `json:"order"`
+	Callback string                 `json:"callback"`
+	Meta     map[string]interface{} `json:"meta"`
+}
+
+type dataRequested struct {
+	Method  string `json:"method"`
+	URL     string `json:"url"`
+	Headers []byte `json:"headers"`
+	Body    []byte `json:"body"`
+}
+
+// FastPostByte  do  POST request via fasthttp
+func FastPostByte(uri string, r *dataRequested) (*fasthttp.Response, error) {
+	req := fasthttp.AcquireRequest()
+	resp := fasthttp.AcquireResponse()
+
+	defer func() {
+		fasthttp.ReleaseResponse(resp)
+		fasthttp.ReleaseRequest(req)
+	}()
+
+	req.SetRequestURI(r.URL)
+
+	// for k, v := range r.Headers {
+	// req.Header.Add(k, v)
+	// }
+
+	req.Header.SetMethod(strings.ToUpper(r.Method))
+
+	req.Header.SetContentType("application/json")
+	req.SetBody(r.Body)
+
+	to, _ := strconv.Atoi(invokeTimeout)
+	timeOut := time.Duration(to) * time.Second
+
+	err := fasthttp.DoTimeout(req, resp, timeOut)
+	if err != nil {
+
+		return nil, err
+	}
+
+	// just for demo
+	out := fasthttp.AcquireResponse()
+	resp.CopyTo(out)
+
+	return out, nil
+}
+
+func setHost(r string, u *url.URL) string {
+	t, _ := url.Parse(r)
+	u.Scheme = t.Scheme
+	u.Host = t.Host + t.Path
+	h, _ := url.PathUnescape(u.String())
+	return h
+}
+
+func getHeaderList(hl string) map[string]string {
+	return map[string]string{}
+}
+
+func publishOrder(pd *publishData) (string, error) {
+	// application/cloudevents+json
+	return "", nil
 }

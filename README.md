@@ -1,5 +1,15 @@
 # nydus
 
+nydus is an addon that helps change the microservice architecture based on sync requests to message-based design by changing the request address.
+
+The monolithic msa conversion journey is difficult. In particular, the final step to moving to a message-based request handling design, rather than end with chopping the service, requires a lot to be fixed.
+
+nydus does not change the structure of direct http requests, but instead executes pubsub so you can use message queues. The advantage of using a message queue is that it can scale based on the length of the message without losing requests.
+
+At this time, nydus publishes http requests, subscribes to external requests or as a sidecar of the service to which it belongs, and delivers http responses.
+
+Nidus is helped by a giant named dapr.
+
 ## Initial step
 
 ### install dapr
@@ -28,91 +38,33 @@ k apply -f componants/pubsub.yaml
 
 # Component Overview
 
-* external: request system
-* enter: nydus-enter is http asyncer.
-* messagebus: message queue in nydus system.
-* callback: return to response to enter when scale out.
-* sender: convert from pubsub to request end return to pubsub.
-* eventlogger: recode request and response.
-* target: target system
-
 ```mermaid
 sequenceDiagram
   autonumber
-  external ->> enter: http request
-  activate enter
-  enter ->> messagebus: message publish
-  Note right of enter: sourceName, targetName required
-  messagebus ->>+ eventlogger: subscribe topic
-  eventlogger ->>- messagebus: request logged event
-  messagebus ->> sender: subscribe topic
-  activate sender
-  sender ->>+ target: message request
-  Note right of sender: use targetName
-  target ->>- sender: return response
-  sender ->> messagebus: response publish
-  deactivate sender
-  messagebus ->>+ eventlogger: subscribe response
-  eventlogger ->>- messagebus: response logged event
-  messagebus ->> callback: subscribe response logged
-  activate callback
-  callback ->> enter: return response
-  deactivate callback
-  Note left of callback: use sourceName(hostIP)
-  enter ->> external: return response
-  deactivate enter
+  external ->> nydus-source: http request
+  nydus-source ->> messagebus: message publish
+  Note right of nydus-source: sourceName, targetName required
+  messagebus ->> nydus-target: subscribe topic
+  nydus-target ->>+ target: message request
+  Note right of nydus-target: use targetName
+  target ->>- nydus-target: return response
+  nydus-target ->> nydus-source: return response
+  Note left of nydus-target: use sourceName(hostIP)
+  nydus-source ->> external: return response
 ```
 
+## sidecar
 
+for service in kubernetes.
 
-# nydus-enter
+## stand-alone
 
-https://jacking75.github.io/go_channel_howto/
-
-sync로 요청하는 http 연결을 뒤에 pubsub에 보내고 응답을 받을 때 까지 유지하는 역할.
-request와 callback 2개의 엔드포인트가 필요함.
-request-id 이름으로 callback 엔드포인트에 체널을 보내두고 id=request-id 인 것이 있을 때 해당 체널로 body를 전달하여 result를 응답함.
-
-## endpoint
-### /invoke/:target
-
-외부에서 target 으로 http 요청을 하는 것을 모사함.
-요청을 받으면 targetName과 자신의 hostIP를 추가하여 pub을 진행.
-
-### /callback/:id
-
-응답 바디를 받아서 invoke를 수행하고 기다리고 있는 프로세스에 전달
-
-#### caster 패키지
-
-프로세스간 통신 방법을 제공.
-
-https://github.com/guiguan/caster#broadcast-a-go-channel
-
-
-# nydus-subquest
-
-subquest subscribe dapr pubsub topic and request legacy system and publish result topic.
-
-## env
-
-source-topic(required): 
-result-topic(required): 
-target-root(required):
-
-
-## data format
-
-1개로 다 합치기로
-
-그래서 확인 해야 하는 기능
-topic sub을 다이나믹으로 할 수 있는지
-
+for external service out of kubernetes.
 
 ```
 dapr run \
-		--app-id add-on \
-    --app-port 8080 \
+		--app-id nydus \
+    --app-port 5000 \
 		--app-protocol http \
 		--dapr-http-port 3500 \
         go run main.go
