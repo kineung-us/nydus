@@ -1,0 +1,31 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nydus
+  labels:
+    app: nydus
+spec:
+  selector:
+    matchLabels:
+      app: nydus
+  template:
+    metadata:
+      labels:
+        app: nydus
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "nydus"
+        dapr.io/app-port: "5000"
+        dapr.io/config: "tracing"
+        dapr.io/log-as-json: "true"
+        dapr.io/log-level: "debug"
+    spec:
+      containers:
+      - name: service
+        image: mrchypark/nydus
+        ports:
+        - containerPort: 5000
+        env:
+        - name: ADDRESS
+          value: ":5000"

@@ -1,0 +1,13 @@
+{
+  "id": "dd4bfbff-e520-4434-af10-195556cf0099",
+  "source": "nydus",
+  "type": "com.dapr.event.sent",
+  "specversion": "1.0",
+  "datacontenttype": "application/json",
+  "data": {
+    "name": "yoda"
+  },
+  "subject": "00-5452099096cdacc48fcf4b6e11688792-8cfa80694e5a18aa-01",
+  "topic": "req-service",
+  "pubsubname": "pubsub"
+}
