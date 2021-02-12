@@ -6,6 +6,8 @@ github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/gofiber/fiber/v2 v2.4.1 h1:aPIE50JPlNJjaGMuyt6dC6bZGY4czdLt8WLhHrFnAFk=
 github.com/gofiber/fiber/v2 v2.4.1/go.mod h1:f8BRRIMjMdRyt2qmJ/0Sea3j3rwwfufPrh9WNBRiVZ0=
+github.com/google/uuid v1.2.0 h1:qJYtXnJRWmpe7m/3XlyhrsLrEURqHRM2kxzoxXqyUDs=
+github.com/google/uuid v1.2.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/guiguan/caster v0.0.0-20191104051807-3736c4464f38 h1:oWETJozNAt29o9b03jPJ8mjQTk8XklRXEZiXBECoNpg=
 github.com/guiguan/caster v0.0.0-20191104051807-3736c4464f38/go.mod h1:giU/iWwQIOg/ND1ecR8raoyROxojrXL9osppnuI7MRY=
 github.com/klauspost/compress v1.10.7 h1:7rix8v8GpI3ZBb0nSozFRgbtXKv+hOe+qfEpZqybrAg=
