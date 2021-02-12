@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"os"
@@ -11,7 +12,6 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/internal/uuid"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/google/uuid"
 	"github.com/guiguan/caster"
@@ -112,7 +112,7 @@ func publish(cst *caster.Caster) func(c *fiber.Ctx) error {
 
 		ce := newCustomEvent(&pub, c.Params("target"))
 
-		// Publishrequestevent
+		publishrequestevent(ce)
 
 		ch, ok := cst.Sub(nil, 1)
 		if !ok {
@@ -123,9 +123,11 @@ func publish(cst *caster.Caster) func(c *fiber.Ctx) error {
 
 		body := []byte{}
 
+		fmt.Println(ce.ID.String())
+
 		for m := range ch {
 			t := m.(message).ID
-			if ce.ID == t {
+			if ce.ID.String() == t {
 				body = m.(message).Body
 				break
 			}
@@ -134,13 +136,47 @@ func publish(cst *caster.Caster) func(c *fiber.Ctx) error {
 	}
 }
 
+func publishrequestevent(ce *customEvent) error {
+	req := fasthttp.AcquireRequest()
+	resp := fasthttp.AcquireResponse()
+
+	defer func() {
+		fasthttp.ReleaseResponse(resp)
+		fasthttp.ReleaseRequest(req)
+	}()
+
+	req.SetRequestURI(pubURL)
+
+	// for k, v := range r.Headers {
+	// req.Header.Add(k, v)
+	// }
+
+	req.Header.SetMethod("POST")
+
+	req.Header.SetContentType("application/cloudevents+json")
+	body, _ := json.Marshal(ce)
+	req.SetBody(body)
+
+	to, _ := strconv.Atoi(invokeTimeout)
+	timeOut := time.Duration(to) * time.Second
+
+	err := fasthttp.DoTimeout(req, resp, timeOut)
+	if err != nil {
+		return err
+	}
+
+	// just for demo
+	fasthttp.AcquireResponse()
+	return nil
+}
+
 // 요청이 들어오면
 // go 루틴 caster로 id 기준 전달
 // 받았음 리턴
 func callback(cst *caster.Caster) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		ok := cst.TryPub(message{
-			ID:   c.Params("eid"),
+			ID:   c.Params("id"),
 			Body: c.Body(),
 		})
 		if !ok {
@@ -164,12 +200,6 @@ func callback(cst *caster.Caster) func(c *fiber.Ctx) error {
 func invoke(c *fiber.Ctx) error {
 	body := c.Body()
 	fmt.Println(string(body))
-
-	go func() {
-		time.Sleep(10 * time.Second)
-		fmt.Println("go done")
-	}()
-
 	// req를 post로 url에 전달
 	// targetRoot + path 등등 수행
 
