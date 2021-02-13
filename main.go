@@ -96,12 +96,6 @@ func main() {
 	_ = app.Shutdown()
 }
 
-type subscribe struct {
-	Pubsubname string `json:"pubsubname"`
-	Topic      string `json:"topic"`
-	Route      string `json:"route"`
-}
-
 // publishHandler start
 
 // 요청을 받으면
