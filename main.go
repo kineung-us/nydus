@@ -244,18 +244,6 @@ type message struct {
 }
 
 // invokeHandler start
-
-// subscribe 주소임
-// 요청 바디를 받아서
-// go 루틴 시작 (아래로)
-// 받았다는 응답 하고 마무리
-// go 루틴 시작하는데 이제부터 아래
-// root 주소로 주소 조립후
-// post 수행
-// 기다림
-// 응답을 받아서
-// hostIP 에게 post로 전달
-// 그리고 종료
 func invokeHandler(c *fiber.Ctx) error {
 	ce := customEvent{}
 
@@ -353,42 +341,6 @@ func callbacktoSource(ce *customEvent) error {
 	out := fasthttp.AcquireResponse()
 	resp.CopyTo(out)
 	return nil
-}
-
-// FastPostByte  do  POST request via fasthttp
-func FastPostByte(uri string, r *reuestedData) (*fasthttp.Response, error) {
-	req := fasthttp.AcquireRequest()
-	resp := fasthttp.AcquireResponse()
-
-	defer func() {
-		fasthttp.ReleaseResponse(resp)
-		fasthttp.ReleaseRequest(req)
-	}()
-
-	req.SetRequestURI(r.URL)
-
-	// for k, v := range r.Headers {
-	// req.Header.Add(k, v)
-	// }
-
-	req.Header.SetMethod(strings.ToUpper(r.Method))
-
-	req.Header.SetContentType("application/json")
-	req.SetBody(r.Body)
-
-	to, _ := strconv.Atoi(invokeTimeout)
-	timeOut := time.Duration(to) * time.Second
-
-	err := fasthttp.DoTimeout(req, resp, timeOut)
-	if err != nil {
-		return nil, err
-	}
-
-	// just for demo
-	out := fasthttp.AcquireResponse()
-	resp.CopyTo(out)
-
-	return out, nil
 }
 
 func (p *publishData) updateHost(r string) {
