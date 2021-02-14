@@ -2,6 +2,7 @@ package main
 
 import (
 	jsonstd "encoding/json"
+	"fmt"
 	"log"
 	"net/url"
 	"os"
@@ -23,7 +24,7 @@ import (
 var (
 	json           = jsoniter.ConfigCompatibleWithStandardLibrary
 	serviceAddress = getEnvVar("ADDRESS", ":5000")
-	myIP           = getEnvVar("MY_POD_IP", "")
+	myIP           = getEnvVar("MY_POD_IP", "http://localhost")
 
 	sourcePubSub = getEnvVar("SOURCE_PUBSUB_NAME", "pubsub")
 	sourceTopic  = getEnvVar("SOURCE_TOPIC_NAME", "req-service")
@@ -89,21 +90,14 @@ func main() {
 		}
 	}()
 
-	c := make(chan os.Signal, 1)                                    // 1Create channel to signify a signal being sent
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGINT) // When an interrupt or termination signal is sent, notify the channel
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 
-	_ = <-c // This blocks the main thread until an interrupt is received
+	_ = <-c
 	_ = app.Shutdown()
 }
 
 // publishHandler start
-
-// 요청을 받으면
-// 요청 처리 쪽에 퍼블리쉬
-// 		이게 post 요청인데 publish body로 해야 함.
-// 응답 기다림
-// caster로 오면 응답 전달
-// 종료
 func publishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 
@@ -120,14 +114,9 @@ func publishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 			Body:    c.Body(),
 		}
 
-		tz, _ := time.LoadLocation("UTC")
-
 		pub := publishData{
 			Order:    &r,
-			Callback: myIP,
-			Meta: map[string]interface{}{
-				"time": time.Now().In(tz).Format(time.RFC3339),
-			},
+			Callback: myIP + serviceAddress,
 		}
 
 		ce := newCustomEvent(&pub, c.Params("target"))
@@ -140,7 +129,7 @@ func publishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 		ch, ok := cst.Sub(nil, 1)
 		if !ok {
 			// https://docs.gofiber.io/api/fiber#newerror
-			return fiber.NewError(782, "Custom error message")
+			return fiber.NewError(782, "Caster subscription failed")
 		}
 		defer cst.Unsub(ch)
 
@@ -192,32 +181,28 @@ func publishrequestevent(ce *customEvent) error {
 }
 
 func newCustomEvent(pub *publishData, targetTopic string) *customEvent {
+	tz, _ := time.LoadLocation("UTC")
 	return &customEvent{
-		ID:              uuid.New(),
-		Source:          "nydus",
-		Type:            "com.dapr.event.sent",
-		SpecVersion:     "1.0",
+		ID:     uuid.New(),
+		Source: "nydus",
+		// Type:            "com.dapr.event.sent",
+		// SpecVersion:     "1.0",
 		DataContentType: "application/json",
 		Data:            pub,
-		Topic:           targetTopic,
-		PubsubName:      sourcePubSub,
-		// 왜인지 모르겠지만, customEvent 여도 자신들 스키마로만 전달 가능.
-		// 그래서 publishData의 meta로 이동
-		// Time:            time.Now().Format(time.RFC3339),
+		// Topic:           targetTopic,
+		// PubsubName:      sourcePubSub,
+		Time: time.Now().In(tz).Format(time.RFC3339),
 	}
 }
 
 type customEvent struct {
-	ID              uuid.UUID    `json:"id"`
-	Source          string       `json:"source"`
-	Type            string       `json:"type"`
-	SpecVersion     string       `json:"specversion"`
+	ID     uuid.UUID `json:"id"`
+	Source string    `json:"source"`
+	// Type            string       `json:"type"`
+	// SpecVersion     string       `json:"specversion"`
 	DataContentType string       `json:"datacontenttype"`
 	Data            *publishData `json:"data"`
-	Topic           string       `json:"topic"`
-	PubsubName      string       `json:"pubsubname"`
-	// 왜인지 모르겠지만, customEvent 여도 자신들 스키마로만 전달 가능.
-	// Time            string       `json:"Time"`
+	Time            string       `json:"time"`
 }
 
 type publishData struct {
@@ -272,22 +257,102 @@ type message struct {
 // hostIP 에게 post로 전달
 // 그리고 종료
 func invokeHandler(c *fiber.Ctx) error {
-	// body := c.Body()
+	ce := customEvent{}
 
-	// req를 post로 url에 전달
-	// targetRoot + path 등등 수행
+	if err := json.Unmarshal(c.Body(), &ce); err != nil {
+		fmt.Println("error")
+		log.Fatalln(err)
+	}
 
-	// Requesttotarget()
-	// Callbacktosource()
+	ce.Data.updateHost(targetRoot)
+	fmt.Println("invoke")
+	fmt.Println(ce.Data.Order.URL)
+
+	out, err := requesttoTarget(ce.Data.Order)
+	if err != nil {
+		out = &reuestedData{
+			Body: []byte(err.Error()),
+		}
+	}
+
+	ce.Data.Order = out
+
+	if err := callbacktoSource(&ce); err != nil {
+		return err
+	}
 
 	return c.JSON(fiber.Map{"success": true})
 }
 
-func getEnvVar(key, fallbackValue string) string {
-	if val, ok := os.LookupEnv(key); ok {
-		return strings.TrimSpace(val)
+func requesttoTarget(in *reuestedData) (out *reuestedData, err error) {
+	req := fasthttp.AcquireRequest()
+	resp := fasthttp.AcquireResponse()
+
+	defer func() {
+		fasthttp.ReleaseResponse(resp)
+		fasthttp.ReleaseRequest(req)
+	}()
+
+	req.SetRequestURI(in.URL)
+	req.Header.SetMethod(strings.ToUpper(in.Method))
+	for k, v := range in.Headers {
+		req.Header.Add(k, v)
 	}
-	return fallbackValue
+	req.SetBody([]byte(in.Body))
+	to, _ := strconv.Atoi(invokeTimeout)
+	timeOut := time.Duration(to) * time.Second
+
+	err = fasthttp.DoTimeout(req, resp, timeOut)
+	if err != nil {
+		return nil, err
+	}
+
+	// just for demo
+	outraw := fasthttp.AcquireResponse()
+	resp.CopyTo(outraw)
+
+	hd := map[string]string{}
+	outraw.Header.VisitAll(func(key, value []byte) {
+		hd[string(key)] = string(value)
+	})
+
+	out = &reuestedData{
+		Headers: hd,
+		Body:    outraw.Body(),
+	}
+
+	return out, nil
+}
+
+func callbacktoSource(ce *customEvent) error {
+	req := fasthttp.AcquireRequest()
+	resp := fasthttp.AcquireResponse()
+
+	defer func() {
+		fasthttp.ReleaseResponse(resp)
+		fasthttp.ReleaseRequest(req)
+	}()
+
+	req.SetRequestURI(ce.Data.Callback + "/callback/" + ce.ID.String())
+	req.Header.SetMethod(strings.ToUpper("POST"))
+	req.Header.SetContentType("application/json")
+	for k, v := range ce.Data.Order.Headers {
+		req.Header.Add(k, v)
+	}
+	req.SetBody([]byte(ce.Data.Order.Body))
+
+	to, _ := strconv.Atoi(invokeTimeout)
+	timeOut := time.Duration(to) * time.Second
+
+	err := fasthttp.DoTimeout(req, resp, timeOut)
+	if err != nil {
+		return err
+	}
+
+	// just for demo
+	out := fasthttp.AcquireResponse()
+	resp.CopyTo(out)
+	return nil
 }
 
 // FastPostByte  do  POST request via fasthttp
@@ -316,7 +381,6 @@ func FastPostByte(uri string, r *reuestedData) (*fasthttp.Response, error) {
 
 	err := fasthttp.DoTimeout(req, resp, timeOut)
 	if err != nil {
-
 		return nil, err
 	}
 
@@ -327,19 +391,23 @@ func FastPostByte(uri string, r *reuestedData) (*fasthttp.Response, error) {
 	return out, nil
 }
 
+func (p *publishData) updateHost(r string) {
+	t, _ := url.Parse(p.Order.URL)
+	p.Order.URL = setHost(r, t)
+}
+
 func setHost(r string, u *url.URL) string {
 	t, _ := url.Parse(r)
 	u.Scheme = t.Scheme
 	u.Host = t.Host + t.Path
+	u.Path = strings.ReplaceAll(u.Path, "/publish/"+sourceTopic, "")
 	h, _ := url.PathUnescape(u.String())
 	return h
 }
 
-func getHeaderList(hl string) map[string]string {
-	return map[string]string{}
-}
-
-func publishOrder(pd *publishData) (string, error) {
-	// application/cloudevents+json
-	return "", nil
+func getEnvVar(key, fallbackValue string) string {
+	if val, ok := os.LookupEnv(key); ok {
+		return strings.TrimSpace(val)
+	}
+	return fallbackValue
 }

@@ -14,21 +14,19 @@ Nidus is helped by a giant named dapr.
 
 ### install dapr
 
+#### kubernetes
+
 ```sh
 kubectl config use-context docker-desktop
-dapr init -k --runtime-version 1.0.0-rc.3
+dapr init -k --runtime-version 1.0.0-rc.4
 ```
 
-### check work done
-
+check work done
 ```sh
 dapr status -k
 ```
 
-### set redis
-
 redis is for state store and pubsub. 
-
 ```sh
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm install redis bitnami/redis
@@ -36,7 +34,15 @@ k apply -f componants/stateStore.yaml
 k apply -f componants/pubsub.yaml
 ```
 
+#### stand-alone
+
+```sh
+dapr init --runtime-version 1.0.0-rc.4
+```
+
 # Component Overview
+
+https://docs.google.com/presentation/d/1Zt2BdLL2wtcwq4M5H687UNUdntpjWGClBe6g8NaCid4/edit#slide=id.p
 
 ```mermaid
 sequenceDiagram
@@ -60,6 +66,8 @@ for service in kubernetes.
 ## stand-alone
 
 for external service out of kubernetes.
+
+### run command
 
 ```
 dapr run \
