@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -12,7 +13,7 @@ func main() {
 	app := fiber.New()
 
 	// Routes
-	app.Post("/", hello)
+	app.Post("/:time", hello)
 
 	// Start server
 	log.Fatal(app.Listen(":3000"))
@@ -21,6 +22,8 @@ func main() {
 // Handler
 func hello(c *fiber.Ctx) error {
 	log.Printf(string(c.Body()))
-	time.Sleep(10 * time.Second)
-	return c.SendString("hi")
+	to, _ := time.ParseDuration(c.Params("time") + "s")
+	fmt.Println(to)
+	time.Sleep(to)
+	return c.JSON("hi")
 }
