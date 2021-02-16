@@ -79,7 +79,7 @@ func main() {
 	app.Use(helmet.New())
 	app.Use(logger.New(logger.Config{
 		Next: func(c *fiber.Ctx) bool {
-			if string(c.Context().Path()) == "/" {
+			if string(c.Context().Path()) == "/" && debug {
 				return true
 			}
 			return false
