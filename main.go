@@ -2,8 +2,6 @@ package main
 
 import (
 	jsonstd "encoding/json"
-	"fmt"
-	"log"
 	"net/url"
 	"os"
 	"os/signal"
@@ -14,11 +12,17 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 
+	"github.com/guiguan/caster"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/helmet/v2"
+
 	"github.com/google/uuid"
-	"github.com/guiguan/caster"
 	"github.com/valyala/fasthttp"
+
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -29,12 +33,13 @@ var (
 	sourcePubSub = getEnvVar("SOURCE_PUBSUB_NAME", "pubsub")
 	sourceTopic  = getEnvVar("SOURCE_TOPIC_NAME", "req-service")
 	pubsubTTL    = getEnvVar("PUBSUB_TTL", "60")
-	pubURL       = "http://localhost:3500/v1.0/publish/" + sourcePubSub + "/" + sourceTopic
-
-	// TODO: 설계가 필요함. tid를 meta로 옮길지 등등이 필요함.
-	headersList = getEnvVar("PROPAGATE_HEADER_LIST", "dialog-session-id, dialog-transaction-id")
+	pubURL       = "http://localhost:3500/v1.0/publish/" + sourcePubSub + "/" + sourceTopic + "?metadata.ttlInSeconds=" + pubsubTTL
 
 	targetRoot = getEnvVar("TARGET_ROOT", "http://localhost:3000")
+
+	pheader1 = getEnvVar("PROPAGATE_HEADER_1", "dsid=dialog-session-id")
+	pheader2 = getEnvVar("PROPAGATE_HEADER_2", "dtid=dialog-transaction-id")
+	pheader3 = getEnvVar("PROPAGATE_HEADER_3", "")
 
 	invokeTimeout   = getEnvVar("INVOKE_TIMEOUT", "60")
 	publishTimeout  = getEnvVar("PUBLISH_TIMEOUT", "5")
@@ -43,10 +48,8 @@ var (
 
 func main() {
 	version := "nydus-v0.0.1"
-
-	// if myIP == "" {
-	// 	panic("MY_POD_IP is required.")
-	// }
+	zerolog.TimeFieldFormat = time.RFC3339
+	log.Print("hello world")
 
 	app := fiber.New(fiber.Config{
 		CaseSensitive: true,
@@ -54,8 +57,23 @@ func main() {
 		ServerHeader:  version,
 	})
 
+	logFormatStart := "{\"time\": \"${time}\", \"route\": \"${route}\", \"status\": ${status}, \"latency\": \"${latency}\", \"invoke-latency\": \"${header:invoke-latency}\", "
+	logFormatPheaders := ""
+	logFormatEnd := "\"body\": ${body}, \"resBody\": ${resBody}}\n"
+
+	if pheader1 != "" {
+		logFormatPheaders = propHeadertoLog(pheader1, logFormatPheaders)
+	}
+	if pheader2 != "" {
+		logFormatPheaders = propHeadertoLog(pheader2, logFormatPheaders)
+	}
+	if pheader3 != "" {
+		logFormatPheaders = propHeadertoLog(pheader3, logFormatPheaders)
+	}
+
+	app.Use(helmet.New())
 	app.Use(logger.New(logger.Config{
-		Format:     "{time: ${time}, route: ${route}, status: ${status}, latency: ${latency}, body: ${body}, resBody: ${resBody}}\n",
+		Format:     logFormatStart + logFormatPheaders + logFormatEnd,
 		TimeFormat: time.RFC3339,
 		TimeZone:   "UTC",
 	}))
@@ -86,7 +104,7 @@ func main() {
 
 	go func() {
 		if err := app.Listen(serviceAddress); err != nil {
-			log.Panic(err)
+			log.Panic().Err(err)
 		}
 	}()
 
@@ -168,7 +186,7 @@ func publishrequestevent(ce *customEvent) error {
 	body, _ := json.Marshal(ce)
 	req.SetBody(body)
 
-	to, _ := strconv.Atoi(invokeTimeout)
+	to, _ := strconv.Atoi(publishTimeout)
 	timeOut := time.Duration(to) * time.Second
 
 	err := fasthttp.DoTimeout(req, resp, timeOut)
@@ -233,7 +251,7 @@ func callbackHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 		if !ok {
 			return fiber.NewError(500, "Caster delivery failed")
 		}
-		return c.SendStatus(204)
+		return c.Status(204).JSON(fiber.Map{"success": true})
 	}
 }
 
@@ -248,13 +266,10 @@ func invokeHandler(c *fiber.Ctx) error {
 	ce := customEvent{}
 
 	if err := json.Unmarshal(c.Body(), &ce); err != nil {
-		fmt.Println("error")
-		log.Fatalln(err)
+		return fiber.NewError(500, "CloudEvent Data Unmarchal failed.")
 	}
 
 	ce.Data.updateHost(targetRoot)
-	fmt.Println("invoke")
-	fmt.Println(ce.Data.Order.URL)
 
 	out, err := requesttoTarget(ce.Data.Order)
 	if err != nil {
@@ -263,6 +278,7 @@ func invokeHandler(c *fiber.Ctx) error {
 		}
 	}
 
+	out.Headers = propHeader(ce.Data.Order.Headers, out.Headers)
 	ce.Data.Order = out
 
 	if err := callbacktoSource(&ce); err != nil {
@@ -290,12 +306,13 @@ func requesttoTarget(in *reuestedData) (out *reuestedData, err error) {
 	to, _ := strconv.Atoi(invokeTimeout)
 	timeOut := time.Duration(to) * time.Second
 
+	before := time.Now()
 	err = fasthttp.DoTimeout(req, resp, timeOut)
+	after := time.Now()
 	if err != nil {
 		return nil, err
 	}
 
-	// just for demo
 	outraw := fasthttp.AcquireResponse()
 	resp.CopyTo(outraw)
 
@@ -303,6 +320,7 @@ func requesttoTarget(in *reuestedData) (out *reuestedData, err error) {
 	outraw.Header.VisitAll(func(key, value []byte) {
 		hd[string(key)] = string(value)
 	})
+	hd["invoke-latency"] = after.Sub(before).String()
 
 	out = &reuestedData{
 		Headers: hd,
@@ -329,7 +347,7 @@ func callbacktoSource(ce *customEvent) error {
 	}
 	req.SetBody([]byte(ce.Data.Order.Body))
 
-	to, _ := strconv.Atoi(invokeTimeout)
+	to, _ := strconv.Atoi(callbackTimeout)
 	timeOut := time.Duration(to) * time.Second
 
 	err := fasthttp.DoTimeout(req, resp, timeOut)
@@ -337,7 +355,6 @@ func callbacktoSource(ce *customEvent) error {
 		return err
 	}
 
-	// just for demo
 	out := fasthttp.AcquireResponse()
 	resp.CopyTo(out)
 	return nil
@@ -362,4 +379,34 @@ func getEnvVar(key, fallbackValue string) string {
 		return strings.TrimSpace(val)
 	}
 	return fallbackValue
+}
+
+func propHeadertoLog(pheader string, log string) string {
+	head := strings.Split(pheader, "=")
+	log = log + `"` + head[0] + `": "${header:` + head[1] + `}", `
+	return log
+}
+
+func propHeader(in map[string]string, out map[string]string) map[string]string {
+	for k, v := range in {
+		pks := []string{}
+		if pheader1 != "" {
+			tem := strings.Split(pheader1, "=")
+			pks = append(pks, tem[1])
+		}
+		if pheader2 != "" {
+			tem := strings.Split(pheader2, "=")
+			pks = append(pks, tem[1])
+		}
+		if pheader3 != "" {
+			tem := strings.Split(pheader3, "=")
+			pks = append(pks, tem[1])
+		}
+		for _, pk := range pks {
+			if strings.Contains(strings.ToLower(k), strings.ToLower(pk)) {
+				out[k] = v
+			}
+		}
+	}
+	return out
 }
