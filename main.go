@@ -78,6 +78,12 @@ func main() {
 
 	app.Use(helmet.New())
 	app.Use(logger.New(logger.Config{
+		Next: func(c *fiber.Ctx) bool {
+			if string(c.Context().Path()) == "/" {
+				return true
+			}
+			return false
+		},
 		Format:     logFormatStart + logFormatPheaders + logFormatEnd,
 		TimeFormat: time.RFC3339,
 		TimeZone:   "UTC",
