@@ -16,6 +16,8 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/middleware/monitor"
+	"github.com/gofiber/fiber/v2/middleware/pprof"
 	"github.com/gofiber/helmet/v2"
 
 	"github.com/google/uuid"
@@ -26,7 +28,10 @@ import (
 )
 
 var (
-	json           = jsoniter.ConfigCompatibleWithStandardLibrary
+	json = jsoniter.ConfigCompatibleWithStandardLibrary
+
+	debug, _ = strconv.ParseBool(getEnvVar("DEBUD", "true"))
+
 	serviceAddress = getEnvVar("ADDRESS", ":5000")
 	myIP           = getEnvVar("MY_POD_IP", "http://localhost")
 
@@ -80,9 +85,11 @@ func main() {
 
 	cst := caster.New(nil)
 
-	// /debug/pprof
-	// app.Use(pprof.New())
-	// app.Get("/dashboard", monitor.New())
+	if debug {
+		// /debug/pprof
+		app.Use(pprof.New())
+		app.Get("/dashboard", monitor.New())
+	}
 
 	// https://v1-rc3.docs.dapr.io/developing-applications/building-blocks/pubsub/howto-publish-subscribe/
 	app.Get("/dapr/subscribe", func(c *fiber.Ctx) error {
@@ -97,6 +104,8 @@ func main() {
 		}}
 		return c.JSON(sub)
 	})
+
+	app.Get("/", func(c *fiber.Ctx) error { return c.SendStatus(200) })
 
 	app.Post("/publish/:target/*", publishHandler(cst))
 	app.Post("/callback/:id", callbackHandler(cst))
