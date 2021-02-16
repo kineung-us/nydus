@@ -25,5 +25,5 @@ func hello(c *fiber.Ctx) error {
 	to, _ := time.ParseDuration(c.Params("time") + "s")
 	fmt.Println(to)
 	time.Sleep(to)
-	return c.JSON("hi")
+	return c.JSON(fiber.Map{"hello": "test"})
 }

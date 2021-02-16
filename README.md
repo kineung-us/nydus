@@ -1,14 +1,14 @@
 # nydus
 
-nydus is an addon that helps change the microservice architecture based on sync requests to message-based design by changing the request address.
+Nydus is an addon that helps change the microservice architecture based on sync requests to message-based design by changing the request address.
 
 The monolithic msa conversion journey is difficult. In particular, the final step to moving to a message-based request handling design, rather than end with chopping the service, requires a lot to be fixed.
 
-nydus does not change the structure of direct http requests, but instead executes pubsub so you can use message queues. The advantage of using a message queue is that it can scale based on the length of the message without losing requests.
+Nydus does not change the structure of direct http requests, but instead executes pubsub so you can use message queues. The advantage of using a message queue is that it can scale based on the length of the message without losing requests.
 
 At this time, nydus publishes http requests, subscribes to external requests or as a sidecar of the service to which it belongs, and delivers http responses.
 
-Nidus is helped by a giant named dapr.
+Nydus is helped by a giant named dapr.
 
 ## Initial step
 
