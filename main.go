@@ -30,10 +30,12 @@ import (
 var (
 	json = jsoniter.ConfigCompatibleWithStandardLibrary
 
-	debug, _ = strconv.ParseBool(getEnvVar("DEBUD", "true"))
+	version = "nydus-v0.0.1"
+
+	debug, _ = strconv.ParseBool(getEnvVar("DEBUG", "false"))
 
 	serviceAddress = getEnvVar("ADDRESS", ":5000")
-	myIP           = getEnvVar("MY_POD_IP", "http://localhost")
+	myIP           = getEnvVar("MY_POD_IP", "localhost")
 
 	sourcePubSub = getEnvVar("SOURCE_PUBSUB_NAME", "pubsub")
 	sourceTopic  = getEnvVar("SOURCE_TOPIC_NAME", "req-service")
@@ -52,9 +54,8 @@ var (
 )
 
 func main() {
-	version := "nydus-v0.0.1"
+
 	zerolog.TimeFieldFormat = time.RFC3339
-	log.Print("hello world")
 
 	app := fiber.New(fiber.Config{
 		CaseSensitive: true,
@@ -62,31 +63,17 @@ func main() {
 		ServerHeader:  version,
 	})
 
-	logFormatStart := "{\"time\": \"${time}\", \"route\": \"${route}\", \"status\": ${status}, \"latency\": \"${latency}\", \"invoke-latency\": \"${header:invoke-latency}\", "
-	logFormatPheaders := ""
-	logFormatEnd := "\"body\": ${body}, \"resBody\": ${resBody}}\n"
-
-	if pheader1 != "" {
-		logFormatPheaders = propHeadertoLog(pheader1, logFormatPheaders)
-	}
-	if pheader2 != "" {
-		logFormatPheaders = propHeadertoLog(pheader2, logFormatPheaders)
-	}
-	if pheader3 != "" {
-		logFormatPheaders = propHeadertoLog(pheader3, logFormatPheaders)
-	}
-
 	app.Use(helmet.New())
 	app.Use(logger.New(logger.Config{
 		Next: func(c *fiber.Ctx) bool {
-			if string(c.Context().Path()) == "/" && debug {
-				return true
-			}
+			log.Print(string(c.Context().Path()))
 			return false
 		},
-		Format:     logFormatStart + logFormatPheaders + logFormatEnd,
-		TimeFormat: time.RFC3339,
-		TimeZone:   "UTC",
+		Format:       logFormatwithHeaders(),
+		TimeFormat:   time.RFC3339,
+		TimeZone:     "UTC",
+		TimeInterval: 0,
+		Output:       os.Stderr,
 	}))
 
 	cst := caster.New(nil)
@@ -113,7 +100,7 @@ func main() {
 
 	app.Get("/", func(c *fiber.Ctx) error { return c.SendStatus(200) })
 
-	app.Post("/publish/:target/*", publishHandler(cst))
+	app.All("/publish/:target/*", publishHandler(cst))
 	app.Post("/callback/:id", callbackHandler(cst))
 	app.Post("/invoke", invokeHandler)
 
@@ -149,7 +136,7 @@ func publishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 
 		pub := publishData{
 			Order:    &r,
-			Callback: myIP + serviceAddress,
+			Callback: "http://" + myIP + serviceAddress,
 		}
 
 		ce := newCustomEvent(&pub, c.Params("target"))
@@ -199,6 +186,7 @@ func publishrequestevent(ce *customEvent) error {
 
 	req.Header.SetContentType("application/cloudevents+json")
 	body, _ := json.Marshal(ce)
+	log.Print(string(body))
 	req.SetBody(body)
 
 	to, _ := strconv.Atoi(publishTimeout)
@@ -260,6 +248,7 @@ func callbackHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 		})
 		ok := cst.TryPub(message{
 			ID:      c.Params("id"),
+			Status:  c.Get("status"),
 			Headers: hd,
 			Body:    c.Body(),
 		})
@@ -272,6 +261,7 @@ func callbackHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 
 type message struct {
 	ID      string
+	Status  string
 	Headers map[string]string
 	Body    []byte
 }
@@ -288,22 +278,24 @@ func invokeHandler(c *fiber.Ctx) error {
 
 	out, err := requesttoTarget(ce.Data.Order)
 	if err != nil {
-		out = &reuestedData{
+		out = &responseData{
 			Body: []byte(err.Error()),
 		}
 	}
 
 	out.Headers = propHeader(ce.Data.Order.Headers, out.Headers)
-	ce.Data.Order = out
-
-	if err := callbacktoSource(&ce); err != nil {
+	cb := callback{
+		Callback: ce.Data.Callback,
+		ID:       ce.ID,
+		Response: out,
+	}
+	if err := callbacktoSource(&cb); err != nil {
 		return err
 	}
-
 	return c.JSON(fiber.Map{"success": true})
 }
 
-func requesttoTarget(in *reuestedData) (out *reuestedData, err error) {
+func requesttoTarget(in *reuestedData) (out *responseData, err error) {
 	req := fasthttp.AcquireRequest()
 	resp := fasthttp.AcquireResponse()
 
@@ -317,7 +309,11 @@ func requesttoTarget(in *reuestedData) (out *reuestedData, err error) {
 	for k, v := range in.Headers {
 		req.Header.Add(k, v)
 	}
-	req.SetBody([]byte(in.Body))
+
+	if string(in.Body) != "null" {
+		req.SetBody([]byte(in.Body))
+	}
+
 	to, _ := strconv.Atoi(invokeTimeout)
 	timeOut := time.Duration(to) * time.Second
 
@@ -337,7 +333,8 @@ func requesttoTarget(in *reuestedData) (out *reuestedData, err error) {
 	})
 	hd["invoke-latency"] = after.Sub(before).String()
 
-	out = &reuestedData{
+	out = &responseData{
+		Status:  resp.StatusCode(),
 		Headers: hd,
 		Body:    outraw.Body(),
 	}
@@ -345,7 +342,7 @@ func requesttoTarget(in *reuestedData) (out *reuestedData, err error) {
 	return out, nil
 }
 
-func callbacktoSource(ce *customEvent) error {
+func callbacktoSource(cb *callback) error {
 	req := fasthttp.AcquireRequest()
 	resp := fasthttp.AcquireResponse()
 
@@ -354,17 +351,21 @@ func callbacktoSource(ce *customEvent) error {
 		fasthttp.ReleaseRequest(req)
 	}()
 
-	req.SetRequestURI(ce.Data.Callback + "/callback/" + ce.ID.String())
+	req.SetRequestURI(cb.Callback + "/callback/" + cb.ID.String())
 	req.Header.SetMethod(strings.ToUpper("POST"))
-	req.Header.SetContentType("application/json")
-	for k, v := range ce.Data.Order.Headers {
+	req.Header.Set("status", strconv.Itoa(cb.Response.Status))
+
+	log.Print(cb.Callback + "/callback/" + cb.ID.String())
+
+	for k, v := range cb.Response.Headers {
 		req.Header.Add(k, v)
 	}
-	req.SetBody([]byte(ce.Data.Order.Body))
+	req.SetBody([]byte(cb.Response.Body))
 
 	to, _ := strconv.Atoi(callbackTimeout)
 	timeOut := time.Duration(to) * time.Second
 
+	log.Print(req.URI().String())
 	err := fasthttp.DoTimeout(req, resp, timeOut)
 	if err != nil {
 		return err
@@ -378,6 +379,18 @@ func callbacktoSource(ce *customEvent) error {
 func (p *publishData) updateHost(r string) {
 	t, _ := url.Parse(p.Order.URL)
 	p.Order.URL = setHost(r, t)
+}
+
+type callback struct {
+	Callback string
+	ID       uuid.UUID
+	Response *responseData
+}
+
+type responseData struct {
+	Status  int                `json:"status"`
+	Headers map[string]string  `json:"headers"`
+	Body    jsonstd.RawMessage `json:"body"`
 }
 
 func setHost(r string, u *url.URL) string {
@@ -394,6 +407,23 @@ func getEnvVar(key, fallbackValue string) string {
 		return strings.TrimSpace(val)
 	}
 	return fallbackValue
+}
+
+func logFormatwithHeaders() string {
+	logFormatStart := "{\"time\": \"${time}\", \"route\": \"${route}\", \"status\": ${status}, \"latency\": \"${latency}\", \"invoke-latency\": \"${header:invoke-latency}\", "
+	logFormatPheaders := ""
+	logFormatEnd := "\"body\": ${body}, \"resBody\": ${resBody}}\n"
+
+	if pheader1 != "" {
+		logFormatPheaders = propHeadertoLog(pheader1, logFormatPheaders)
+	}
+	if pheader2 != "" {
+		logFormatPheaders = propHeadertoLog(pheader2, logFormatPheaders)
+	}
+	if pheader3 != "" {
+		logFormatPheaders = propHeadertoLog(pheader3, logFormatPheaders)
+	}
+	return logFormatStart + logFormatPheaders + logFormatEnd
 }
 
 func propHeadertoLog(pheader string, log string) string {
