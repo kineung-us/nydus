@@ -40,7 +40,6 @@ var (
 	sourcePubSub = getEnvVar("SOURCE_PUBSUB_NAME", "pubsub")
 	sourceTopic  = getEnvVar("SOURCE_TOPIC_NAME", "req-service")
 	pubsubTTL    = getEnvVar("PUBSUB_TTL", "60")
-	pubURL       = "http://localhost:3500/v1.0/publish/" + sourcePubSub + "/" + sourceTopic + "?metadata.ttlInSeconds=" + pubsubTTL
 
 	targetRoot = getEnvVar("TARGET_ROOT", "http://localhost:3000")
 
@@ -155,11 +154,13 @@ func publishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 
 		body := []byte{}
 		headers := map[string]string{}
+		status := ""
 
 		for m := range ch {
 			t := m.(message).ID
 			if ce.ID.String() == t {
 				body = m.(message).Body
+				status = m.(message).Status
 				headers = m.(message).Headers
 				break
 			}
@@ -167,7 +168,8 @@ func publishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 		for k, v := range headers {
 			c.Set(k, v)
 		}
-		return c.Send(body)
+		st, _ := strconv.Atoi(status)
+		return c.Status(st).Send(body)
 	}
 }
 
@@ -180,6 +182,7 @@ func publishrequestevent(ce *customEvent) error {
 		fasthttp.ReleaseRequest(req)
 	}()
 
+	pubURL := "http://localhost:3500/v1.0/publish/" + sourcePubSub + "/" + ce.Topic + "?metadata.ttlInSeconds=" + pubsubTTL
 	req.SetRequestURI(pubURL)
 
 	req.Header.SetMethod("POST")
@@ -210,7 +213,7 @@ func newCustomEvent(pub *publishData, targetTopic string) *customEvent {
 		// SpecVersion:     "1.0",
 		DataContentType: "application/json",
 		Data:            pub,
-		// Topic:           targetTopic,
+		Topic:           targetTopic,
 		// PubsubName:      sourcePubSub,
 		Time: time.Now().In(tz).Format(time.RFC3339),
 	}
@@ -222,6 +225,7 @@ type customEvent struct {
 	// Type            string       `json:"type"`
 	// SpecVersion     string       `json:"specversion"`
 	DataContentType string       `json:"datacontenttype"`
+	Topic           string       `json:"topic"`
 	Data            *publishData `json:"data"`
 	Time            string       `json:"time"`
 }
@@ -307,7 +311,7 @@ func requesttoTarget(in *reuestedData) (out *responseData, err error) {
 	req.SetRequestURI(in.URL)
 	req.Header.SetMethod(strings.ToUpper(in.Method))
 	for k, v := range in.Headers {
-		req.Header.Add(k, v)
+		req.Header.Set(k, v)
 	}
 
 	if string(in.Body) != "null" {
@@ -355,17 +359,14 @@ func callbacktoSource(cb *callback) error {
 	req.Header.SetMethod(strings.ToUpper("POST"))
 	req.Header.Set("status", strconv.Itoa(cb.Response.Status))
 
-	log.Print(cb.Callback + "/callback/" + cb.ID.String())
-
 	for k, v := range cb.Response.Headers {
-		req.Header.Add(k, v)
+		req.Header.Set(k, v)
 	}
 	req.SetBody([]byte(cb.Response.Body))
 
 	to, _ := strconv.Atoi(callbackTimeout)
 	timeOut := time.Duration(to) * time.Second
 
-	log.Print(req.URI().String())
 	err := fasthttp.DoTimeout(req, resp, timeOut)
 	if err != nil {
 		return err
