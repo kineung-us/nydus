@@ -55,6 +55,9 @@ var (
 func main() {
 
 	zerolog.TimeFieldFormat = time.RFC3339
+	zerolog.TimestampFunc = func() time.Time {
+		return time.Now().UTC()
+	}
 
 	app := fiber.New(fiber.Config{
 		CaseSensitive: true,
@@ -64,10 +67,10 @@ func main() {
 
 	app.Use(helmet.New())
 	app.Use(logger.New(logger.Config{
-		Next: func(c *fiber.Ctx) bool {
-			log.Print(string(c.Context().Path()))
-			return false
-		},
+		// Next: func(c *fiber.Ctx) bool {
+		// 	log.Print(string(c.Context().Path()))
+		// 	return false
+		// },
 		Format:       logFormatwithHeaders(),
 		TimeFormat:   time.RFC3339,
 		TimeZone:     "UTC",
@@ -189,7 +192,7 @@ func publishrequestevent(ce *customEvent) error {
 
 	req.Header.SetContentType("application/cloudevents+json")
 	body, _ := json.Marshal(ce)
-	log.Print(string(body))
+
 	req.SetBody(body)
 
 	to, _ := strconv.Atoi(publishTimeout)
@@ -250,13 +253,18 @@ func callbackHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 		c.Request().Header.VisitAll(func(key, value []byte) {
 			hd[string(key)] = string(value)
 		})
-		ok := cst.TryPub(message{
+
+		m := message{
 			ID:      c.Params("id"),
 			Status:  c.Get("status"),
 			Headers: hd,
 			Body:    c.Body(),
-		})
-		if !ok {
+		}
+		jm, _ := json.Marshal(m)
+
+		log.Debug().RawJSON("body", jm).Send()
+
+		if ok := cst.TryPub(m); !ok {
 			return fiber.NewError(500, "Caster delivery failed")
 		}
 		return c.Status(204).JSON(fiber.Map{"success": true})
@@ -411,9 +419,9 @@ func getEnvVar(key, fallbackValue string) string {
 }
 
 func logFormatwithHeaders() string {
-	logFormatStart := "{\"time\": \"${time}\", \"route\": \"${route}\", \"status\": ${status}, \"latency\": \"${latency}\", \"invoke-latency\": \"${header:invoke-latency}\", "
+	logFormatStart := "{\"level\":\"debug\",\"route\":\"${route}\",\"status\":${status},\"latency\":\"${latency}\",\"invoke-latency\":\"${header:invoke-latency}\","
 	logFormatPheaders := ""
-	logFormatEnd := "\"body\": ${body}, \"resBody\": ${resBody}}\n"
+	logFormatEnd := "\"body\":${body},\"resBody\":${resBody},\"time\":\"${time}\"}\n"
 
 	if pheader1 != "" {
 		logFormatPheaders = propHeadertoLog(pheader1, logFormatPheaders)
@@ -429,7 +437,7 @@ func logFormatwithHeaders() string {
 
 func propHeadertoLog(pheader string, log string) string {
 	head := strings.Split(pheader, "=")
-	log = log + `"` + head[0] + `": "${header:` + head[1] + `}", `
+	log = log + `"` + head[0] + `":"${header:` + head[1] + `}",`
 	return log
 }
 
