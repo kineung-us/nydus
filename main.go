@@ -41,7 +41,7 @@ var (
 	sourceTopic  = getEnvVar("SOURCE_TOPIC_NAME", "req-service")
 	pubsubTTL    = getEnvVar("PUBSUB_TTL", "60")
 
-	targetRoot = getEnvVar("TARGET_ROOT", "http://localhost:3000")
+	targetRoot = getEnvVar("TARGET_ROOT", "https://httpbin.org")
 
 	pheader1 = getEnvVar("PROPAGATE_HEADER_1", "dsid=dialog-session-id")
 	pheader2 = getEnvVar("PROPAGATE_HEADER_2", "dtid=dialog-transaction-id")
@@ -67,10 +67,6 @@ func main() {
 
 	app.Use(helmet.New())
 	app.Use(logger.New(logger.Config{
-		// Next: func(c *fiber.Ctx) bool {
-		// 	log.Print(string(c.Context().Path()))
-		// 	return false
-		// },
 		Format:       logFormatwithHeaders(),
 		TimeFormat:   time.RFC3339,
 		TimeZone:     "UTC",
@@ -141,7 +137,9 @@ func publishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 			Callback: "http://" + myIP + serviceAddress,
 		}
 
-		ce := newCustomEvent(&pub, c.Params("target"))
+		tid := getTrace(c)
+
+		ce := newCustomEvent(&pub, tid, c.Params("target"))
 
 		// https://v1-rc3.docs.dapr.io/reference/api/pubsub_api/#http-response-codes
 		if err := publishrequestevent(ce); err != nil {
@@ -176,6 +174,18 @@ func publishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 	}
 }
 
+func getTrace(c *fiber.Ctx) string {
+	tid := ""
+	switch {
+	case c.Get("traceparent") != "":
+		tid = c.Get("traceparent")
+	case c.Get("traceid") != "":
+		tid = c.Get("traceparent")
+	default:
+	}
+	return tid
+}
+
 func publishrequestevent(ce *customEvent) error {
 	req := fasthttp.AcquireRequest()
 	resp := fasthttp.AcquireResponse()
@@ -207,19 +217,35 @@ func publishrequestevent(ce *customEvent) error {
 	return nil
 }
 
-func newCustomEvent(pub *publishData, targetTopic string) *customEvent {
+func newCustomEvent(pub *publishData, tid string, targetTopic string) *customEvent {
 	tz, _ := time.LoadLocation("UTC")
-	return &customEvent{
-		ID:     uuid.New(),
-		Source: "nydus",
-		// Type:            "com.dapr.event.sent",
-		// SpecVersion:     "1.0",
-		DataContentType: "application/json",
-		Data:            pub,
-		Topic:           targetTopic,
-		// PubsubName:      sourcePubSub,
-		Time: time.Now().In(tz).Format(time.RFC3339),
+	if tid == "" {
+		return &customEvent{
+			ID:     uuid.New(),
+			Source: "nydus",
+			// Type:            "com.dapr.event.sent",
+			// SpecVersion:     "1.0",
+			DataContentType: "application/json",
+			Data:            pub,
+			Topic:           targetTopic,
+			// PubsubName:      sourcePubSub,
+			Time: time.Now().In(tz).Format(time.RFC3339),
+		}
+	} else {
+		return &customEvent{
+			ID:     uuid.New(),
+			Source: "nydus",
+			// Type:            "com.dapr.event.sent",
+			// SpecVersion:     "1.0",
+			DataContentType: "application/json",
+			Data:            pub,
+			Topic:           targetTopic,
+			TraceID:         tid,
+			// PubsubName:      sourcePubSub,
+			Time: time.Now().In(tz).Format(time.RFC3339),
+		}
 	}
+
 }
 
 type customEvent struct {
@@ -229,8 +255,13 @@ type customEvent struct {
 	// SpecVersion     string       `json:"specversion"`
 	DataContentType string       `json:"datacontenttype"`
 	Topic           string       `json:"topic"`
+	TraceID         string       `json:"traceid"`
 	Data            *publishData `json:"data"`
 	Time            string       `json:"time"`
+}
+
+func (c *customEvent) propTrace() {
+	c.Data.Order.Headers["traceparant"] = c.TraceID
 }
 
 type publishData struct {
@@ -287,6 +318,7 @@ func invokeHandler(c *fiber.Ctx) error {
 	}
 
 	ce.Data.updateHost(targetRoot)
+	ce.propTrace()
 
 	out, err := requesttoTarget(ce.Data.Order)
 	if err != nil {
@@ -301,9 +333,11 @@ func invokeHandler(c *fiber.Ctx) error {
 		ID:       ce.ID,
 		Response: out,
 	}
+
 	if err := callbacktoSource(&cb); err != nil {
 		return err
 	}
+
 	return c.JSON(fiber.Map{"success": true})
 }
 
