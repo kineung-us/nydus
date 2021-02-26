@@ -137,9 +137,7 @@ func publishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 			Callback: "http://" + myIP + serviceAddress,
 		}
 
-		tid := getTrace(c)
-
-		ce := newCustomEvent(&pub, tid, c.Params("target"))
+		ce := newCustomEvent(&pub, getTrace(c), c.Params("target"))
 
 		// https://v1-rc3.docs.dapr.io/reference/api/pubsub_api/#http-response-codes
 		if err := publishrequestevent(ce); err != nil {
@@ -228,24 +226,20 @@ func newCustomEvent(pub *publishData, tid string, targetTopic string) *customEve
 			DataContentType: "application/json",
 			Data:            pub,
 			Topic:           targetTopic,
-			// PubsubName:      sourcePubSub,
-			Time: time.Now().In(tz).Format(time.RFC3339),
-		}
-	} else {
-		return &customEvent{
-			ID:     uuid.New(),
-			Source: "nydus",
-			// Type:            "com.dapr.event.sent",
-			// SpecVersion:     "1.0",
-			DataContentType: "application/json",
-			Data:            pub,
-			Topic:           targetTopic,
-			TraceID:         tid,
-			// PubsubName:      sourcePubSub,
-			Time: time.Now().In(tz).Format(time.RFC3339),
+			Time:            time.Now().In(tz).Format(time.RFC3339),
 		}
 	}
-
+	return &customEvent{
+		ID:     uuid.New(),
+		Source: "nydus",
+		// Type:            "com.dapr.event.sent",
+		// SpecVersion:     "1.0",
+		DataContentType: "application/json",
+		Data:            pub,
+		Topic:           targetTopic,
+		TraceID:         tid,
+		Time:            time.Now().In(tz).Format(time.RFC3339),
+	}
 }
 
 type customEvent struct {
@@ -255,7 +249,7 @@ type customEvent struct {
 	// SpecVersion     string       `json:"specversion"`
 	DataContentType string       `json:"datacontenttype"`
 	Topic           string       `json:"topic"`
-	TraceID         string       `json:"traceid"`
+	TraceID         string       `json:"traceid,omitempty"`
 	Data            *publishData `json:"data"`
 	Time            string       `json:"time"`
 }
