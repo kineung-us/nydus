@@ -15,7 +15,6 @@ import (
 	"github.com/guiguan/caster"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/monitor"
 	"github.com/gofiber/fiber/v2/middleware/pprof"
 	"github.com/gofiber/helmet/v2"
@@ -66,13 +65,13 @@ func main() {
 	})
 
 	app.Use(helmet.New())
-	app.Use(logger.New(logger.Config{
-		Format:       logFormatwithHeaders(),
-		TimeFormat:   time.RFC3339,
-		TimeZone:     "UTC",
-		TimeInterval: 0,
-		Output:       os.Stderr,
-	}))
+	// app.Use(logger.New(logger.Config{
+	// 	Format:       logFormatwithHeaders(),
+	// 	TimeFormat:   time.RFC3339,
+	// 	TimeZone:     "UTC",
+	// 	TimeInterval: 0,
+	// 	Output:       os.Stderr,
+	// }))
 
 	cst := caster.New(nil)
 
@@ -93,6 +92,7 @@ func main() {
 			Topic:      sourceTopic,
 			Route:      "/invoke",
 		}}
+		log.Info().Interface("sub", sub)
 		return c.JSON(sub)
 	})
 
@@ -118,7 +118,7 @@ func main() {
 // publishHandler start
 func publishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
-
+		before := time.Now()
 		// set headers
 		hd := map[string]string{}
 		c.Request().Header.VisitAll(func(key, value []byte) {
@@ -151,24 +151,30 @@ func publishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 		}
 		defer cst.Unsub(ch)
 
-		body := []byte{}
-		headers := map[string]string{}
-		status := ""
+		rm := message{}
 
 		for m := range ch {
 			t := m.(message).ID
 			if ce.ID.String() == t {
-				body = m.(message).Body
-				status = m.(message).Status
-				headers = m.(message).Headers
+				rm = m.(message)
 				break
 			}
 		}
-		for k, v := range headers {
+		for k, v := range rm.Headers {
 			c.Set(k, v)
 		}
-		st, _ := strconv.Atoi(status)
-		return c.Status(st).Send(body)
+		st, _ := strconv.Atoi(rm.Status)
+
+		after := time.Now()
+		log.Info().
+			Str("traceid", ce.TraceID).
+			Str("service", sourceTopic).
+			Str("route", c.OriginalURL()).
+			Str("latency", after.Sub(before).String()).
+			Interface("request", ce).
+			Interface("response", rm).
+			Send()
+		return c.Status(st).Send(rm.Body)
 	}
 }
 
@@ -285,9 +291,6 @@ func callbackHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 			Headers: hd,
 			Body:    c.Body(),
 		}
-		jm, _ := json.Marshal(m)
-
-		log.Debug().RawJSON("body", jm).Send()
 
 		if ok := cst.TryPub(m); !ok {
 			return fiber.NewError(500, "Caster delivery failed")
@@ -300,11 +303,12 @@ type message struct {
 	ID      string
 	Status  string
 	Headers map[string]string
-	Body    []byte
+	Body    jsonstd.RawMessage
 }
 
 // invokeHandler start
 func invokeHandler(c *fiber.Ctx) error {
+	before := time.Now()
 	ce := customEvent{}
 
 	if err := json.Unmarshal(c.Body(), &ce); err != nil {
@@ -331,7 +335,16 @@ func invokeHandler(c *fiber.Ctx) error {
 	if err := callbacktoSource(&cb); err != nil {
 		return err
 	}
+	after := time.Now()
 
+	log.Info().
+		Str("traceid", ce.TraceID).
+		Str("service", sourceTopic).
+		Str("route", "/invoke").
+		Str("latency", after.Sub(before).String()).
+		Interface("request", ce).
+		Interface("response", cb).
+		Send()
 	return c.JSON(fiber.Map{"success": true})
 }
 
@@ -357,9 +370,7 @@ func requesttoTarget(in *reuestedData) (out *responseData, err error) {
 	to, _ := strconv.Atoi(invokeTimeout)
 	timeOut := time.Duration(to) * time.Second
 
-	before := time.Now()
 	err = fasthttp.DoTimeout(req, resp, timeOut)
-	after := time.Now()
 	if err != nil {
 		return nil, err
 	}
@@ -371,7 +382,6 @@ func requesttoTarget(in *reuestedData) (out *responseData, err error) {
 	outraw.Header.VisitAll(func(key, value []byte) {
 		hd[string(key)] = string(value)
 	})
-	hd["invoke-latency"] = after.Sub(before).String()
 
 	out = &responseData{
 		Status:  resp.StatusCode(),
