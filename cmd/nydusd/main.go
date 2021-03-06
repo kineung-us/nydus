@@ -167,7 +167,7 @@ func publishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 
 		after := time.Now()
 		log.Info().
-			Str("traceid", c.Get("traceparent")).
+			Str("traceid", ce.TraceID).
 			Str("service", sourceTopic).
 			Str("route", c.OriginalURL()).
 			Str("latency", after.Sub(before).String()).
@@ -261,7 +261,7 @@ type customEvent struct {
 }
 
 func (c *customEvent) propTrace() {
-	c.Data.Order.Headers["traceparant"] = c.TraceID
+	c.Data.Order.Headers["traceparent"] = c.TraceID
 }
 
 type publishData struct {
