@@ -205,6 +205,7 @@ func publishrequestevent(ce *customEvent) error {
 	req.Header.SetMethod("POST")
 
 	req.Header.SetContentType("application/cloudevents+json")
+	req.Header.Set("traceparent", ce.TraceID)
 	body, _ := json.Marshal(ce)
 
 	req.SetBody(body)
@@ -223,18 +224,6 @@ func publishrequestevent(ce *customEvent) error {
 
 func newCustomEvent(pub *publishData, tid string, targetTopic string) *customEvent {
 	tz, _ := time.LoadLocation("UTC")
-	if tid == "" {
-		return &customEvent{
-			ID:     uuid.New(),
-			Source: "nydus",
-			// Type:            "com.dapr.event.sent",
-			// SpecVersion:     "1.0",
-			DataContentType: "application/json",
-			Data:            pub,
-			Topic:           targetTopic,
-			Time:            time.Now().In(tz).Format(time.RFC3339),
-		}
-	}
 	return &customEvent{
 		ID:     uuid.New(),
 		Source: "nydus",
@@ -261,7 +250,7 @@ type customEvent struct {
 }
 
 func (c *customEvent) propTrace() {
-	c.Data.Order.Headers["traceparent"] = c.TraceID
+	c.Data.Order.Headers["Traceparent"] = c.TraceID
 }
 
 type publishData struct {
