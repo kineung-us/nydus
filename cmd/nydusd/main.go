@@ -167,7 +167,7 @@ func publishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 
 		after := time.Now()
 		log.Info().
-			Str("traceid", ce.TraceID).
+			Str("traceid", c.Get("traceparent")).
 			Str("service", sourceTopic).
 			Str("route", c.OriginalURL()).
 			Str("latency", after.Sub(before).String()).
@@ -184,7 +184,7 @@ func getTrace(c *fiber.Ctx) string {
 	case c.Get("traceparent") != "":
 		tid = c.Get("traceparent")
 	case c.Get("traceid") != "":
-		tid = c.Get("traceparent")
+		tid = c.Get("traceid")
 	default:
 	}
 	return tid
