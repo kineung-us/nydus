@@ -29,7 +29,9 @@ import (
 var (
 	json = jsoniter.ConfigCompatibleWithStandardLibrary
 
-	version = "nydus-v0.0.1"
+	// TODO: github 태크 받아서 빌드하도록 수정
+	// TODO: 개발 push 시 깃 sha로 넣도록 작성
+	version = "nydus-v0.0.2"
 
 	debug, _ = strconv.ParseBool(getEnvVar("DEBUG", "false"))
 
