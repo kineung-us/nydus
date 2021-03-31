@@ -31,11 +31,12 @@ var (
 
 	// TODO: github 태크 받아서 빌드하도록 수정
 	// TODO: 개발 push 시 깃 sha로 넣도록 작성
-	version = "nydus-v0.0.2"
+	version = "nydus-v0.0.3"
 
 	debug, _ = strconv.ParseBool(getEnvVar("DEBUG", "false"))
 
 	serviceAddress = getEnvVar("ADDRESS", ":5000")
+	serviceVersion = getEnvVar("VERSION", "v1.0.0")
 	myIP           = getEnvVar("MY_POD_IP", "localhost")
 
 	sourcePubSub = getEnvVar("SOURCE_PUBSUB_NAME", "pubsub")
@@ -43,10 +44,6 @@ var (
 	pubsubTTL    = getEnvVar("PUBSUB_TTL", "60")
 
 	targetRoot = getEnvVar("TARGET_ROOT", "https://httpbin.org")
-
-	pheader1 = getEnvVar("PROPAGATE_HEADER_1", "dsid=dialog-session-id")
-	pheader2 = getEnvVar("PROPAGATE_HEADER_2", "dtid=dialog-transaction-id")
-	pheader3 = getEnvVar("PROPAGATE_HEADER_3", "")
 
 	invokeTimeout   = getEnvVar("INVOKE_TIMEOUT", "60")
 	publishTimeout  = getEnvVar("PUBLISH_TIMEOUT", "5")
@@ -61,19 +58,11 @@ func main() {
 	}
 
 	app := fiber.New(fiber.Config{
-		CaseSensitive: true,
-		StrictRouting: true,
-		ServerHeader:  version,
+		ServerHeader:             version,
+		DisableHeaderNormalizing: true,
+		DisableStartupMessage:    true,
 	})
-
 	app.Use(helmet.New())
-	// app.Use(logger.New(logger.Config{
-	// 	Format:       logFormatwithHeaders(),
-	// 	TimeFormat:   time.RFC3339,
-	// 	TimeZone:     "UTC",
-	// 	TimeInterval: 0,
-	// 	Output:       os.Stderr,
-	// }))
 
 	cst := caster.New(nil)
 
@@ -94,7 +83,7 @@ func main() {
 			Topic:      sourceTopic,
 			Route:      "/invoke",
 		}}
-		log.Info().Interface("sub", sub)
+		log.Info().Interface("sub", sub).Send()
 		return c.JSON(sub)
 	})
 
@@ -140,6 +129,12 @@ func publishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 		}
 
 		ce := newCustomEvent(&pub, getTrace(c), c.Params("target"))
+		log.Debug().
+			Str("traceid", ce.TraceID).
+			Str("service", sourceTopic).
+			Str("route", c.OriginalURL()).
+			Interface("request", ce).
+			Send()
 
 		// https://v1-rc3.docs.dapr.io/reference/api/pubsub_api/#http-response-codes
 		if err := publishrequestevent(ce); err != nil {
@@ -171,6 +166,7 @@ func publishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 		log.Info().
 			Str("traceid", ce.TraceID).
 			Str("service", sourceTopic).
+			Str("version", serviceVersion).
 			Str("route", c.OriginalURL()).
 			Str("latency", after.Sub(before).String()).
 			Interface("request", ce).
@@ -252,7 +248,7 @@ type customEvent struct {
 }
 
 func (c *customEvent) propTrace() {
-	c.Data.Order.Headers["Traceparent"] = c.TraceID
+	c.Data.Order.Headers["traceparent"] = c.TraceID
 }
 
 type publishData struct {
@@ -305,6 +301,12 @@ func invokeHandler(c *fiber.Ctx) error {
 	if err := json.Unmarshal(c.Body(), &ce); err != nil {
 		return fiber.NewError(500, "CloudEvent Data Unmarchal failed.")
 	}
+	log.Debug().
+		Str("traceid", ce.TraceID).
+		Str("service", sourceTopic).
+		Str("route", "/invoke").
+		Interface("request", ce).
+		Send()
 
 	ce.Data.updateHost(targetRoot)
 	ce.propTrace()
@@ -316,7 +318,6 @@ func invokeHandler(c *fiber.Ctx) error {
 		}
 	}
 
-	out.Headers = propHeader(ce.Data.Order.Headers, out.Headers)
 	cb := callback{
 		Callback: ce.Data.Callback,
 		ID:       ce.ID,
@@ -331,6 +332,7 @@ func invokeHandler(c *fiber.Ctx) error {
 	log.Info().
 		Str("traceid", ce.TraceID).
 		Str("service", sourceTopic).
+		Str("version", serviceVersion).
 		Str("route", "/invoke").
 		Str("latency", after.Sub(before).String()).
 		Interface("request", ce).
@@ -445,51 +447,4 @@ func getEnvVar(key, fallbackValue string) string {
 		return strings.TrimSpace(val)
 	}
 	return fallbackValue
-}
-
-func logFormatwithHeaders() string {
-	logFormatStart := "{\"level\":\"debug\",\"route\":\"${route}\",\"status\":${status},\"latency\":\"${latency}\",\"invoke-latency\":\"${header:invoke-latency}\","
-	logFormatPheaders := ""
-	logFormatEnd := "\"body\":${body},\"resBody\":${resBody},\"time\":\"${time}\"}\n"
-
-	if pheader1 != "" {
-		logFormatPheaders = propHeadertoLog(pheader1, logFormatPheaders)
-	}
-	if pheader2 != "" {
-		logFormatPheaders = propHeadertoLog(pheader2, logFormatPheaders)
-	}
-	if pheader3 != "" {
-		logFormatPheaders = propHeadertoLog(pheader3, logFormatPheaders)
-	}
-	return logFormatStart + logFormatPheaders + logFormatEnd
-}
-
-func propHeadertoLog(pheader string, log string) string {
-	head := strings.Split(pheader, "=")
-	log = log + `"` + head[0] + `":"${header:` + head[1] + `}",`
-	return log
-}
-
-func propHeader(in map[string]string, out map[string]string) map[string]string {
-	for k, v := range in {
-		pks := []string{}
-		if pheader1 != "" {
-			tem := strings.Split(pheader1, "=")
-			pks = append(pks, tem[1])
-		}
-		if pheader2 != "" {
-			tem := strings.Split(pheader2, "=")
-			pks = append(pks, tem[1])
-		}
-		if pheader3 != "" {
-			tem := strings.Split(pheader3, "=")
-			pks = append(pks, tem[1])
-		}
-		for _, pk := range pks {
-			if strings.Contains(strings.ToLower(k), strings.ToLower(pk)) {
-				out[k] = v
-			}
-		}
-	}
-	return out
 }

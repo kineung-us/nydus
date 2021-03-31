@@ -37,7 +37,7 @@ k apply -f componants/pubsub.yaml
 #### stand-alone
 
 ```sh
-dapr init --runtime-version 1.0.0-rc.4
+dapr init --runtime-version 1.0.0
 ```
 
 # Component Overview
@@ -77,3 +77,9 @@ dapr run \
 		--dapr-http-port 3500 \
         go run main.go
 ```
+
+
+## TODO
+
+[] build injector
+[] create CRD
