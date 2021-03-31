@@ -21,8 +21,7 @@ jobs:
         with:
           images: mrchypark/nydus
           tags: |
-            {{version}}
-            {{major}}.{{minor}}
+            type=semver,pattern={{version}}
       -
         name: Set up QEMU
         uses: docker/setup-qemu-action@v1
