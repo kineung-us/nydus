@@ -108,24 +108,16 @@ func main() {
 }
 
 func logHandler(c *fiber.Ctx) error {
-	ce := customEvent{}
+	b := map[string]interface{}{}
 
-	if err := json.Unmarshal(c.Body(), &ce); err != nil {
+	if err := json.Unmarshal(c.Body(), &b); err != nil {
 		return fiber.NewError(500, "CloudEvent Data Unmarchal failed.")
 	}
-	log.Debug().
-		Str("traceid", ce.TraceID).
-		Str("service", sourceTopic).
-		Str("route", "/log").
-		Interface("request", ce).
-		Send()
-
 	log.Info().
-		Str("traceid", ce.TraceID).
 		Str("service", sourceTopic).
 		Str("version", serviceVersion).
 		Str("route", c.OriginalURL()).
-		Interface("request", c.Body()).
+		Interface("request", b).
 		Send()
 	return c.SendStatus(204)
 }
