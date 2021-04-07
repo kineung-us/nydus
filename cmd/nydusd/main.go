@@ -31,7 +31,7 @@ var (
 
 	// TODO: github 태크 받아서 빌드하도록 수정
 	// TODO: 개발 push 시 깃 sha로 넣도록 작성
-	version = "nydus-v0.0.3"
+	version = "nydus-v0.0.5"
 
 	debug, _ = strconv.ParseBool(getEnvVar("DEBUG", "false"))
 
@@ -90,6 +90,7 @@ func main() {
 	app.Get("/", func(c *fiber.Ctx) error { return c.SendStatus(200) })
 
 	app.All("/publish/:target/*", publishHandler(cst))
+	app.Post("/log", logHandler)
 	app.Post("/callback/:id", callbackHandler(cst))
 	app.Post("/invoke", invokeHandler)
 
@@ -104,6 +105,29 @@ func main() {
 
 	_ = <-c
 	_ = app.Shutdown()
+}
+
+func logHandler(c *fiber.Ctx) error {
+	ce := customEvent{}
+
+	if err := json.Unmarshal(c.Body(), &ce); err != nil {
+		return fiber.NewError(500, "CloudEvent Data Unmarchal failed.")
+	}
+	log.Debug().
+		Str("traceid", ce.TraceID).
+		Str("service", sourceTopic).
+		Str("route", "/log").
+		Interface("request", ce).
+		Send()
+
+	log.Info().
+		Str("traceid", ce.TraceID).
+		Str("service", sourceTopic).
+		Str("version", serviceVersion).
+		Str("route", c.OriginalURL()).
+		Interface("request", c.Body()).
+		Send()
+	return c.SendStatus(204)
 }
 
 // publishHandler start
@@ -282,7 +306,7 @@ func callbackHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 		if ok := cst.TryPub(m); !ok {
 			return fiber.NewError(500, "Caster delivery failed")
 		}
-		return c.Status(204).JSON(fiber.Map{"success": true})
+		return c.SendStatus(204)
 	}
 }
 
