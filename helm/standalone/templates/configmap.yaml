@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "nydus.fullname" . }}-configmap
+data:
+  DEBUG: "{{ .Values.nydus.debug }}"
+  ADDRESS: ":{{ .Values.nydus.port }}"
+  SOURCE_PUBSUB_NAME: "{{ .Values.nydus.pubsub.name }}"
+  SOURCE_TOPIC_NAME: "{{ .Values.nydus.pubsub.topic }}"
+  VERSION: "{{ .Values.nydus.target.version }}"
+  TARGET_ROOT: "{{ .Values.nydus.target.root }}"
+  PUBSUB_TTL: "{{ .Values.nydus.pubsub.ttl }}"
+  INVOKE_TIMEOUT: "{{ .Values.nydus.timeout.invoke }}"
+  PUBLISH_TIMEOUT: "{{ .Values.nydus.timeout.publish }}"
+  CALLBACK_TIMEOUT: "{{ .Values.nydus.timeout.callback }}"
