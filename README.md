@@ -67,6 +67,8 @@ for service in kubernetes.
 
 for external service out of kubernetes.
 
+[readme](./helm/standalone/)
+
 ### run command
 
 ```
