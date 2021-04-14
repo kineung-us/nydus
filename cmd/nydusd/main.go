@@ -31,16 +31,16 @@ var (
 
 	// TODO: github 태크 받아서 빌드하도록 수정
 	// TODO: 개발 push 시 깃 sha로 넣도록 작성
-	version = "nydus-v0.0.5"
+	version = "nydus-v0.0.6"
 
 	debug, _ = strconv.ParseBool(getEnvVar("DEBUG", "false"))
 
-	serviceAddress = getEnvVar("ADDRESS", ":5000")
-	serviceVersion = getEnvVar("VERSION", "v1.0.0")
+	serviceAddress = getEnvVar("APP_PORT", "5000")
 	myIP           = getEnvVar("MY_POD_IP", "localhost")
 
 	sourcePubSub = getEnvVar("SOURCE_PUBSUB_NAME", "pubsub")
 	sourceTopic  = getEnvVar("SOURCE_TOPIC_NAME", "req-service")
+	sourceVersion = getEnvVar("SOURCE_VERSION", "v1.0.0")
 	pubsubTTL    = getEnvVar("PUBSUB_TTL", "60")
 
 	targetRoot = getEnvVar("TARGET_ROOT", "https://httpbin.org")
@@ -95,7 +95,7 @@ func main() {
 	app.Post("/invoke", invokeHandler)
 
 	go func() {
-		if err := app.Listen(serviceAddress); err != nil {
+		if err := app.Listen(":" + serviceAddress); err != nil {
 			log.Panic().Err(err)
 		}
 	}()
@@ -115,7 +115,7 @@ func logHandler(c *fiber.Ctx) error {
 	}
 	log.Info().
 		Str("service", sourceTopic).
-		Str("version", serviceVersion).
+		Str("version", sourceVersion).
 		Str("route", c.OriginalURL()).
 		Interface("request", b).
 		Send()
@@ -182,7 +182,7 @@ func publishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 		log.Info().
 			Str("traceid", ce.TraceID).
 			Str("service", sourceTopic).
-			Str("version", serviceVersion).
+			Str("version", sourceVersion).
 			Str("route", c.OriginalURL()).
 			Str("latency", after.Sub(before).String()).
 			Interface("request", ce).
@@ -348,7 +348,7 @@ func invokeHandler(c *fiber.Ctx) error {
 	log.Info().
 		Str("traceid", ce.TraceID).
 		Str("service", sourceTopic).
-		Str("version", serviceVersion).
+		Str("version", sourceVersion).
 		Str("route", "/invoke").
 		Str("latency", after.Sub(before).String()).
 		Interface("request", ce).
