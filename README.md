@@ -18,7 +18,7 @@ Nydus is helped by a giant named dapr.
 
 ```sh
 kubectl config use-context docker-desktop
-dapr init -k --runtime-version 1.0.0-rc.4
+dapr init -k --runtime-version 1.0.0
 ```
 
 check work done
@@ -69,19 +69,3 @@ for external service out of kubernetes.
 
 [readme](./helm/standalone/)
 
-### run command
-
-```
-dapr run \
-		--app-id nydus \
-    --app-port 5000 \
-		--app-protocol http \
-		--dapr-http-port 3500 \
-        go run main.go
-```
-
-
-## TODO
-
-[] build injector
-[] create CRD
