@@ -93,10 +93,10 @@ func main() {
 	app.Post("/invoke", invokeHandler)
 
 	go func() {
+		log.Debug().Str("Server start", version).Send()
 		if err := app.Listen(":" + serviceAddress); err != nil {
 			log.Panic().Err(err)
 		}
-		log.Debug().Str("Server start", version).Send()
 	}()
 
 	c := make(chan os.Signal, 1)
