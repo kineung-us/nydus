@@ -29,21 +29,20 @@ import (
 var (
 	json = jsoniter.ConfigCompatibleWithStandardLibrary
 
-	// TODO: github 태크 받아서 빌드하도록 수정
-	// TODO: 개발 push 시 깃 sha로 넣도록 작성
-	version = "nydus-v0.0.6"
-
+	version  = "dev"
+	nversion = "nydus-" + version
 	debug, _ = strconv.ParseBool(getEnvVar("DEBUG", "false"))
 
 	serviceAddress = getEnvVar("APP_PORT", "5000")
 	myIP           = getEnvVar("MY_POD_IP", "localhost")
 
-	sourcePubSub = getEnvVar("SOURCE_PUBSUB_NAME", "pubsub")
-	sourceTopic  = getEnvVar("SOURCE_TOPIC_NAME", "req-service")
-	sourceVersion = getEnvVar("SOURCE_VERSION", "v1.0.0")
-	pubsubTTL    = getEnvVar("PUBSUB_TTL", "60")
+	subscribePubsub  = getEnvVar("SUBSCRIBE_PUBSUB_NAME", "pubsub")
+	subscribeTopic   = getEnvVar("SUBSCRIBE_TOPIC_NAME", "req-service")
+	publishPubsub    = getEnvVar("PUBLISH_PUBSUB_NAME", "pubsub")
+	publishPubsubTTL = getEnvVar("PUBLISH_PUBSUB_TTL", "60")
 
-	targetRoot = getEnvVar("TARGET_ROOT", "https://httpbin.org")
+	targetRoot    = getEnvVar("TARGET_ROOT", "https://httpbin.org")
+	targetVersion = getEnvVar("TARGET_VERSION", "v1.0.0")
 
 	invokeTimeout   = getEnvVar("INVOKE_TIMEOUT", "60")
 	publishTimeout  = getEnvVar("PUBLISH_TIMEOUT", "5")
@@ -58,7 +57,7 @@ func main() {
 	}
 
 	app := fiber.New(fiber.Config{
-		ServerHeader:             version,
+		ServerHeader:             nversion,
 		DisableHeaderNormalizing: true,
 		DisableStartupMessage:    true,
 	})
@@ -79,8 +78,8 @@ func main() {
 			Topic      string `json:"topic"`
 			Route      string `json:"route"`
 		}{{
-			Pubsubname: sourcePubSub,
-			Topic:      sourceTopic,
+			Pubsubname: subscribePubsub,
+			Topic:      subscribeTopic,
 			Route:      "/invoke",
 		}}
 		log.Info().Interface("sub", sub).Send()
@@ -114,8 +113,8 @@ func logHandler(c *fiber.Ctx) error {
 		return fiber.NewError(500, "CloudEvent Data Unmarchal failed.")
 	}
 	log.Info().
-		Str("service", sourceTopic).
-		Str("version", sourceVersion).
+		Str("service", subscribeTopic).
+		Str("version", targetVersion).
 		Str("route", c.OriginalURL()).
 		Interface("request", b).
 		Send()
@@ -147,7 +146,7 @@ func publishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 		ce := newCustomEvent(&pub, getTrace(c), c.Params("target"))
 		log.Debug().
 			Str("traceid", ce.TraceID).
-			Str("service", sourceTopic).
+			Str("service", subscribeTopic).
 			Str("route", c.OriginalURL()).
 			Interface("request", ce).
 			Send()
@@ -181,8 +180,8 @@ func publishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 		after := time.Now()
 		log.Info().
 			Str("traceid", ce.TraceID).
-			Str("service", sourceTopic).
-			Str("version", sourceVersion).
+			Str("service", subscribeTopic).
+			Str("version", targetVersion).
 			Str("route", c.OriginalURL()).
 			Str("latency", after.Sub(before).String()).
 			Interface("request", ce).
@@ -213,7 +212,7 @@ func publishrequestevent(ce *customEvent) error {
 		fasthttp.ReleaseRequest(req)
 	}()
 
-	pubURL := "http://localhost:3500/v1.0/publish/" + sourcePubSub + "/" + ce.Topic + "?metadata.ttlInSeconds=" + pubsubTTL
+	pubURL := "http://localhost:3500/v1.0/publish/" + publishPubsub + "/" + ce.Topic + "?metadata.ttlInSeconds=" + publishPubsubTTL
 	req.SetRequestURI(pubURL)
 
 	req.Header.SetMethod("POST")
@@ -319,7 +318,7 @@ func invokeHandler(c *fiber.Ctx) error {
 	}
 	log.Debug().
 		Str("traceid", ce.TraceID).
-		Str("service", sourceTopic).
+		Str("service", subscribeTopic).
 		Str("route", "/invoke").
 		Interface("request", ce).
 		Send()
@@ -347,8 +346,8 @@ func invokeHandler(c *fiber.Ctx) error {
 
 	log.Info().
 		Str("traceid", ce.TraceID).
-		Str("service", sourceTopic).
-		Str("version", sourceVersion).
+		Str("service", subscribeTopic).
+		Str("version", targetVersion).
 		Str("route", "/invoke").
 		Str("latency", after.Sub(before).String()).
 		Interface("request", ce).
@@ -453,7 +452,7 @@ func setHost(r string, u *url.URL) string {
 	t, _ := url.Parse(r)
 	u.Scheme = t.Scheme
 	u.Host = t.Host + t.Path
-	u.Path = strings.ReplaceAll(u.Path, "/publish/"+sourceTopic, "")
+	u.Path = strings.ReplaceAll(u.Path, "/publish/"+subscribeTopic, "")
 	h, _ := url.PathUnescape(u.String())
 	return h
 }
