@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	jsonstd "encoding/json"
 	"net/url"
 	"os"
@@ -30,6 +31,7 @@ var (
 	json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 	version  = "dev"
+	nversion = "nydus-" + version
 	debug, _ = strconv.ParseBool(getEnvVar("DEBUG", "false"))
 
 	serviceAddress = getEnvVar("APP_PORT", "5000")
@@ -56,13 +58,13 @@ func main() {
 	}
 
 	app := fiber.New(fiber.Config{
-		ServerHeader:             version,
+		ServerHeader:             nversion,
 		DisableHeaderNormalizing: true,
 		DisableStartupMessage:    true,
 	})
 	app.Use(helmet.New())
 
-	cst := caster.New(nil)
+	cst := caster.New(context.TODO())
 
 	if debug {
 		// /debug/pprof
@@ -93,7 +95,7 @@ func main() {
 	app.Post("/invoke", invokeHandler)
 
 	go func() {
-		log.Debug().Str("Server start", version).Send()
+		log.Debug().Str("Server start", nversion).Send()
 		if err := app.Listen(":" + serviceAddress); err != nil {
 			log.Panic().Err(err)
 		}
@@ -102,7 +104,7 @@ func main() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 
-	_ = <-c
+	<-c
 	_ = app.Shutdown()
 }
 
@@ -156,7 +158,7 @@ func publishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 			return fiber.NewError(500, "Fail to publish event")
 		}
 
-		ch, ok := cst.Sub(nil, 1)
+		ch, ok := cst.Sub(context.TODO(), 1)
 		if !ok {
 			// https://docs.gofiber.io/api/fiber#newerror
 			return fiber.NewError(782, "Caster subscription failed")
