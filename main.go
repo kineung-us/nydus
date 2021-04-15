@@ -30,7 +30,6 @@ var (
 	json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 	version  = "dev"
-	nversion = "nydus-" + version
 	debug, _ = strconv.ParseBool(getEnvVar("DEBUG", "false"))
 
 	serviceAddress = getEnvVar("APP_PORT", "5000")
@@ -57,7 +56,7 @@ func main() {
 	}
 
 	app := fiber.New(fiber.Config{
-		ServerHeader:             nversion,
+		ServerHeader:             version,
 		DisableHeaderNormalizing: true,
 		DisableStartupMessage:    true,
 	})
@@ -97,6 +96,7 @@ func main() {
 		if err := app.Listen(":" + serviceAddress); err != nil {
 			log.Panic().Err(err)
 		}
+		log.Debug().Str("Server start", version).Send()
 	}()
 
 	c := make(chan os.Signal, 1)
