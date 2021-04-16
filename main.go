@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	jsonstd "encoding/json"
+	"fmt"
 	"net/url"
 	"os"
 	"os/signal"
@@ -37,13 +38,13 @@ var (
 	serviceAddress = getEnvVar("APP_PORT", "5000")
 	myIP           = getEnvVar("MY_POD_IP", "localhost")
 
-	subscribePubsub  = getEnvVar("SUBSCRIBE_PUBSUB_NAME", "pubsub")
-	subscribeTopic   = getEnvVar("SUBSCRIBE_TOPIC_NAME", "req-service")
-	publishPubsub    = getEnvVar("PUBLISH_PUBSUB_NAME", "pubsub")
+	subscribePubsub  = getEnvRequired("SUBSCRIBE_PUBSUB_NAME")
+	subscribeTopic   = getEnvRequired("SUBSCRIBE_TOPIC_NAME")
+	publishPubsub    = getEnvRequired("PUBLISH_PUBSUB_NAME")
 	publishPubsubTTL = getEnvVar("PUBLISH_PUBSUB_TTL", "60")
 
-	targetRoot    = getEnvVar("TARGET_ROOT", "https://httpbin.org")
-	targetVersion = getEnvVar("TARGET_VERSION", "v1.0.0")
+	targetRoot    = getEnvRequired("TARGET_ROOT")
+	targetVersion = getEnvRequired("TARGET_VERSION")
 
 	invokeTimeout   = getEnvVar("INVOKE_TIMEOUT", "60")
 	publishTimeout  = getEnvVar("PUBLISH_TIMEOUT", "5")
@@ -464,4 +465,12 @@ func getEnvVar(key, fallbackValue string) string {
 		return strings.TrimSpace(val)
 	}
 	return fallbackValue
+}
+
+func getEnvRequired(key string) string {
+	val, ok := os.LookupEnv(key)
+	if !ok {
+		panic(fmt.Errorf("environment variable(key: \"%s\") is required", key))
+	}
+	return val
 }
