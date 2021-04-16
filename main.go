@@ -35,8 +35,8 @@ var (
 	nversion = "nydus-" + version
 	debug, _ = strconv.ParseBool(getEnvVar("DEBUG", "false"))
 
-	serviceAddress = getEnvVar("APP_PORT", "5000")
-	myIP           = getEnvVar("MY_POD_IP", "localhost")
+	serviceAddress = getEnvVar("NYDUS_HTTP_PORT", "5000")
+	myIP           = getEnvVar("NYDUS_HOST_IP", "localhost")
 
 	subscribePubsub  = getEnvRequired("SUBSCRIBE_PUBSUB_NAME")
 	subscribeTopic   = getEnvRequired("SUBSCRIBE_TOPIC_NAME")
