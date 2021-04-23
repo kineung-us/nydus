@@ -503,7 +503,11 @@ func callbacktoSource(cb *callback) error {
 	for k, v := range cb.Response.Headers {
 		req.Header.Set(k, v)
 	}
-	req.SetBody(cb.Response.Body.([]byte))
+	bb, err := bodyMarshal(cb.Response.Body.(map[string]interface{}), cb.Response.Headers["Content-Type"])
+	if err != nil {
+		return err
+	}
+	req.SetBody(bb)
 
 	to, _ := strconv.Atoi(callbackTimeout)
 	timeOut := time.Duration(to) * time.Second
