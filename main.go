@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	jsonstd "encoding/json"
+	"encoding/xml"
 	"fmt"
 	"net/url"
 	"os"
@@ -35,11 +36,12 @@ var (
 	nversion = "nydus-" + version
 	debug, _ = strconv.ParseBool(getEnvVar("DEBUG", "false"))
 
-	serviceAddress = getEnvVar("NYDUS_HTTP_PORT", "5000")
+	serviceAddress = ":" + getEnvVar("NYDUS_HTTP_PORT", "5000")
 	myIP           = getEnvVar("NYDUS_HOST_IP", "localhost")
 
-	subscribePubsub  = getEnvRequired("SUBSCRIBE_PUBSUB_NAME")
-	subscribeTopic   = getEnvRequired("SUBSCRIBE_TOPIC_NAME")
+	subscribePubsub = getEnvRequired("SUBSCRIBE_PUBSUB_NAME")
+	subscribeTopic  = getEnvRequired("SUBSCRIBE_TOPIC_NAME")
+
 	publishPubsub    = getEnvRequired("PUBLISH_PUBSUB_NAME")
 	publishPubsubTTL = getEnvVar("PUBLISH_PUBSUB_TTL", "60")
 
@@ -97,7 +99,7 @@ func main() {
 
 	go func() {
 		log.Debug().Str("Server start", nversion).Send()
-		if err := app.Listen(":" + serviceAddress); err != nil {
+		if err := app.Listen(serviceAddress); err != nil {
 			log.Panic().Err(err)
 		}
 	}()
@@ -110,15 +112,17 @@ func main() {
 }
 
 func logHandler(c *fiber.Ctx) error {
-	b := map[string]interface{}{}
 
-	if err := json.Unmarshal(c.Body(), &b); err != nil {
-		return fiber.NewError(500, "CloudEvent Data Unmarchal failed.")
+	b, err := bodyUnmarshal(c.Body(), c.Get("Content-Type"))
+	if err != nil {
+		return err
 	}
+
 	log.Info().
 		Str("service", subscribeTopic).
 		Str("version", targetVersion).
 		Str("route", c.OriginalURL()).
+		Str("contentType", c.Get("Content-Type")).
 		Interface("request", b).
 		Send()
 	return c.SendStatus(204)
@@ -134,11 +138,16 @@ func publishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 			hd[string(key)] = string(value)
 		})
 
-		r := reuestedData{
+		b, err := bodyUnmarshal(c.Body(), c.Get("Content-Type"))
+		if err != nil {
+			return err
+		}
+
+		r := requestedData{
 			Method:  c.Method(),
 			URL:     c.BaseURL() + c.OriginalURL(),
 			Headers: hd,
-			Body:    c.Body(),
+			Body:    b,
 		}
 
 		pub := publishData{
@@ -156,7 +165,7 @@ func publishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 
 		// https://v1-rc3.docs.dapr.io/reference/api/pubsub_api/#http-response-codes
 		if err := publishrequestevent(ce); err != nil {
-			return fiber.NewError(500, "Fail to publish event")
+			return fiber.NewError(500, "Fail to publish event. Err: ", err.Error())
 		}
 
 		ch, ok := cst.Sub(context.TODO(), 1)
@@ -194,6 +203,57 @@ func publishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 	}
 }
 
+func bodyUnmarshal(raw []byte, ct string) (map[string]interface{}, error) {
+	b := map[string]interface{}{}
+	switch {
+	case strings.Contains(ct, "json"):
+		if err := json.Unmarshal(raw, &b); err != nil {
+			return nil, fiber.NewError(500, "Body Json Unmarchal failed. Err: ", err.Error())
+		}
+	case strings.Contains(ct, "xml"):
+		if err := xml.Unmarshal(raw, &b); err != nil {
+			return nil, fiber.NewError(500, "Body XML Unmarchal failed. Err: ", err.Error())
+		}
+	case strings.Contains(ct, "x-www-form-urlencoded"):
+		log.Info().Str("body", string(raw)).Send()
+		ss := strings.Split(string(raw), "&")
+		for _, s := range ss {
+			kv := strings.Split(s, "=")
+			b[kv[0]] = kv[1]
+		}
+	default:
+		b["string"] = string(raw)
+	}
+	return b, nil
+}
+
+func bodyMarshal(d map[string]interface{}, ct string) ([]byte, error) {
+	b := []byte{}
+	switch {
+	case strings.Contains(ct, "json"):
+		j, err := json.Marshal(d)
+		if err != nil {
+			return nil, fiber.NewError(500, "Body Json Marchal failed. Err: ", err.Error())
+		}
+		b = j
+	case strings.Contains(ct, "xml"):
+		x, err := xml.Marshal(d)
+		if err != nil {
+			return nil, fiber.NewError(500, "Body XML Marchal failed.")
+		}
+		b = x
+	case strings.Contains(ct, "x-www-form-urlencoded"):
+		r := []string{}
+		for k, v := range d {
+			r = append(r, strings.Join([]string{k, fmt.Sprintf("%v", v)}, "="))
+		}
+		b = []byte(strings.Join(r, "&"))
+	default:
+		b = []byte(fmt.Sprintf("%v", d["string"]))
+	}
+	return b, nil
+}
+
 func getTrace(c *fiber.Ctx) string {
 	tid := ""
 	switch {
@@ -209,6 +269,12 @@ func getTrace(c *fiber.Ctx) string {
 func publishrequestevent(ce *customEvent) error {
 	req := fasthttp.AcquireRequest()
 	resp := fasthttp.AcquireResponse()
+	log.Info().
+		Str("stage", "pub-function").
+		Str("service", subscribeTopic).
+		Str("version", targetVersion).
+		Interface("request", ce).
+		Send()
 
 	defer func() {
 		fasthttp.ReleaseResponse(resp)
@@ -270,16 +336,16 @@ func (c *customEvent) propTrace() {
 }
 
 type publishData struct {
-	Order    *reuestedData          `json:"order"`
+	Order    *requestedData         `json:"order"`
 	Callback string                 `json:"callback"`
 	Meta     map[string]interface{} `json:"meta"`
 }
 
-type reuestedData struct {
-	Method  string             `json:"method"`
-	URL     string             `json:"url"`
-	Headers map[string]string  `json:"headers"`
-	Body    jsonstd.RawMessage `json:"body"`
+type requestedData struct {
+	Method  string                 `json:"method"`
+	URL     string                 `json:"url"`
+	Headers map[string]string      `json:"headers"`
+	Body    map[string]interface{} `json:"body"`
 }
 
 // callbackHandler start
@@ -308,7 +374,7 @@ type message struct {
 	ID      string
 	Status  string
 	Headers map[string]string
-	Body    jsonstd.RawMessage
+	Body    []byte
 }
 
 // invokeHandler start
@@ -319,6 +385,7 @@ func invokeHandler(c *fiber.Ctx) error {
 	if err := json.Unmarshal(c.Body(), &ce); err != nil {
 		return fiber.NewError(500, "CloudEvent Data Unmarchal failed.")
 	}
+
 	log.Debug().
 		Str("traceid", ce.TraceID).
 		Str("service", subscribeTopic).
@@ -359,7 +426,7 @@ func invokeHandler(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"success": true})
 }
 
-func requesttoTarget(in *reuestedData) (out *responseData, err error) {
+func requesttoTarget(in *requestedData) (out *responseData, err error) {
 	req := fasthttp.AcquireRequest()
 	resp := fasthttp.AcquireResponse()
 
@@ -373,9 +440,13 @@ func requesttoTarget(in *reuestedData) (out *responseData, err error) {
 	for k, v := range in.Headers {
 		req.Header.Set(k, v)
 	}
+	b, err := bodyMarshal(in.Body, in.Headers["Content-Type"])
+	if err != nil {
+		return
+	}
 
-	if string(in.Body) != "null" {
-		req.SetBody([]byte(in.Body))
+	if string(b) != "null" {
+		req.SetBody(b)
 	}
 
 	to, _ := strconv.Atoi(invokeTimeout)

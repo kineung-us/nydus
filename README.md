@@ -37,7 +37,7 @@ k apply -f componants/pubsub.yaml
 #### stand-alone
 
 ```sh
-dapr init --runtime-version 1.0.0
+dapr init
 ```
 
 # Component Overview
@@ -69,3 +69,11 @@ for external service out of kubernetes.
 
 [readme](./helm/standalone/)
 
+```
+dapr run \
+		--app-id add-on \
+    --app-port 5000 \
+		--app-protocol http \
+		--dapr-http-port 3500 \
+        go run main.go
+```
