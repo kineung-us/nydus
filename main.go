@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	jsonstd "encoding/json"
 	"encoding/xml"
 	"fmt"
 	"net/url"
@@ -407,6 +406,12 @@ func invokeHandler(c *fiber.Ctx) error {
 		}
 	}
 
+	bb, err := bodyUnmarshal(out.Body.([]byte), out.Headers["Content-Type"])
+	if err != nil {
+		return err
+	}
+	out.Body = bb
+
 	cb := callback{
 		Callback: ce.Data.Callback,
 		ID:       ce.ID,
@@ -494,7 +499,7 @@ func callbacktoSource(cb *callback) error {
 	for k, v := range cb.Response.Headers {
 		req.Header.Set(k, v)
 	}
-	req.SetBody([]byte(cb.Response.Body))
+	req.SetBody(cb.Response.Body.([]byte))
 
 	to, _ := strconv.Atoi(callbackTimeout)
 	timeOut := time.Duration(to) * time.Second
@@ -521,9 +526,9 @@ type callback struct {
 }
 
 type responseData struct {
-	Status  int                `json:"status"`
-	Headers map[string]string  `json:"headers"`
-	Body    jsonstd.RawMessage `json:"body"`
+	Status  int               `json:"status"`
+	Headers map[string]string `json:"headers"`
+	Body    interface{}       `json:"body"`
 }
 
 func setHost(r string, u *url.URL) string {
