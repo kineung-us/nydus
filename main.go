@@ -34,7 +34,7 @@ var (
 	nversion = "nydus-" + version
 	debug, _ = strconv.ParseBool(getEnvVar("DEBUG", "false"))
 
-	serviceAddress = ":" + getEnvVar("NYDUS_HTTP_PORT", "5000")
+	serviceAddress = getEnvVar("NYDUS_HTTP_PORT", "5000")
 	myIP           = getEnvVar("NYDUS_HOST_IP", "localhost")
 
 	subscribePubsub = getEnvRequired("SUBSCRIBE_PUBSUB_NAME")
@@ -101,7 +101,7 @@ func main() {
 
 	go func() {
 		log.Debug().Str("Server start", nversion).Send()
-		if err := app.Listen(serviceAddress); err != nil {
+		if err := app.Listen(":" + serviceAddress); err != nil {
 			log.Panic().Err(err)
 		}
 	}()
@@ -154,7 +154,7 @@ func publishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 
 		pub := publishData{
 			Order:    &r,
-			Callback: "http://" + myIP + serviceAddress,
+			Callback: "http://" + myIP + ":" + serviceAddress,
 		}
 
 		ce := newCustomEvent(&pub, getTrace(c), c.Params("target"))
