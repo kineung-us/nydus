@@ -69,10 +69,14 @@ func main() {
 
 	cst := caster.New(context.TODO())
 
+	zerolog.SetGlobalLevel(zerolog.InfoLevel)
+
 	if debug {
 		// /debug/pprof
 		app.Use(pprof.New())
 		app.Get("/dashboard", monitor.New())
+
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	}
 
 	// https://v1-rc3.docs.dapr.io/developing-applications/building-blocks/pubsub/howto-publish-subscribe/
