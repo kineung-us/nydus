@@ -222,7 +222,11 @@ func bodyUnmarshal(raw []byte, ct string) (map[string]interface{}, error) {
 		ss := strings.Split(string(raw), "&")
 		for _, s := range ss {
 			kv := strings.Split(s, "=")
-			b[kv[0]] = kv[1]
+			if len(kv) == 1 {
+				b[kv[0]] = nil
+			} else {
+				b[kv[0]] = kv[1]
+			}
 		}
 	default:
 		b["string"] = string(raw)
