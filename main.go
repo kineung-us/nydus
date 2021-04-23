@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/xml"
 	"fmt"
 	"net/url"
 	"os"
@@ -213,11 +212,11 @@ func bodyUnmarshal(raw []byte, ct string) (map[string]interface{}, error) {
 		if err := json.Unmarshal(raw, &b); err != nil {
 			return nil, fiber.NewError(500, "Body Json Unmarchal failed. Err: ", err.Error())
 		}
-	case strings.Contains(ct, "xml"):
-		log.Info().Str("xmlraw", string(raw)).Send()
-		if err := xml.Unmarshal(raw, &b); err != nil {
-			return nil, fiber.NewError(500, "Body XML Unmarchal failed. Err: ", err.Error())
-		}
+	// case strings.Contains(ct, "xml"):
+	// 	log.Info().Str("xmlraw", string(raw)).Send()
+	// 	if err := xml.Unmarshal(raw, &b); err != nil {
+	// 		return nil, fiber.NewError(500, "Body XML Unmarchal failed. Err: ", err.Error())
+	// 	}
 	case strings.Contains(ct, "x-www-form-urlencoded"):
 		log.Info().Str("body", string(raw)).Send()
 		ss := strings.Split(string(raw), "&")
@@ -244,12 +243,12 @@ func bodyMarshal(d map[string]interface{}, ct string) ([]byte, error) {
 			return nil, fiber.NewError(500, "Body Json Marchal failed. Err: ", err.Error())
 		}
 		b = j
-	case strings.Contains(ct, "xml"):
-		x, err := xml.Marshal(d)
-		if err != nil {
-			return nil, fiber.NewError(500, "Body XML Marchal failed.")
-		}
-		b = x
+	// case strings.Contains(ct, "xml"):
+	// 	x, err := xml.Marshal(d)
+	// 	if err != nil {
+	// 		return nil, fiber.NewError(500, "Body XML Marchal failed.")
+	// 	}
+	// 	b = x
 	case strings.Contains(ct, "x-www-form-urlencoded"):
 		r := []string{}
 		for k, v := range d {
