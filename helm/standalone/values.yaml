@@ -8,7 +8,7 @@ image:
   repository: mrchypark/nydus
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "0.0.5"
+  tag: "0.0.9-rc1"
 
 imagePullSecrets: []
 nameOverride: ""
@@ -31,7 +31,7 @@ podSecurityContext:
 securityContext:
   capabilities:
     drop:
-    - ALL
+      - ALL
   readOnlyRootFilesystem: true
   runAsNonRoot: true
 
@@ -54,7 +54,7 @@ nydus:
     publish: "5"
     callback: "5"
 
-resources: 
+resources:
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
