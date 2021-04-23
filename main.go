@@ -214,6 +214,7 @@ func bodyUnmarshal(raw []byte, ct string) (map[string]interface{}, error) {
 			return nil, fiber.NewError(500, "Body Json Unmarchal failed. Err: ", err.Error())
 		}
 	case strings.Contains(ct, "xml"):
+		log.Info().Str("xmlraw", string(raw)).Send()
 		if err := xml.Unmarshal(raw, &b); err != nil {
 			return nil, fiber.NewError(500, "Body XML Unmarchal failed. Err: ", err.Error())
 		}
