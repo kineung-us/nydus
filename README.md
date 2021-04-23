@@ -37,7 +37,7 @@ k apply -f componants/pubsub.yaml
 #### stand-alone
 
 ```sh
-dapr init
+dapr init --slim
 ```
 
 # Component Overview

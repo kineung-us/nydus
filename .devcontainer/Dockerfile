@@ -30,27 +30,29 @@ RUN apt-get update \
     # Clean up
     && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* /tmp/library-scripts/
 
-# Install kubectl
-RUN curl -sSL -o /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl \
-    && chmod +x /usr/local/bin/kubectl
+# # Install kubectl
+# RUN curl -sSL -o /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl \
+#     && chmod +x /usr/local/bin/kubectl
 
-# Install Helm
-RUN curl -s https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash -
+# # Install Helm
+# RUN curl -s https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash -
 
-# Script copies localhost's ~/.kube/config file into the container and swaps out 
-# localhost for host.docker.internal on bash/zsh start to keep them in sync.
-COPY copy-kube-config.sh /usr/local/share/
-RUN chown ${USERNAME}:root /usr/local/share/copy-kube-config.sh \
-    && echo "source /usr/local/share/copy-kube-config.sh" | tee -a /root/.bashrc /root/.zshrc /home/${USERNAME}/.bashrc >> /home/${USERNAME}/.zshrc
+# # Script copies localhost's ~/.kube/config file into the container and swaps out 
+# # localhost for host.docker.internal on bash/zsh start to keep them in sync.
+# COPY copy-kube-config.sh /usr/local/share/
+# RUN chown ${USERNAME}:root /usr/local/share/copy-kube-config.sh \
+#     && echo "source /usr/local/share/copy-kube-config.sh" | tee -a /root/.bashrc /root/.zshrc /home/${USERNAME}/.bashrc >> /home/${USERNAME}/.zshrc
 
-ENV ZSH_CUSTOM=/root/.oh-my-zsh/custom
+ENV ZSH_CUSTOM=/home/${USERNAME}/.oh-my-zsh/custom
 
 RUN git clone https://github.com/denysdovhan/spaceship-prompt.git "$ZSH_CUSTOM/themes/spaceship-prompt" --depth=1 \
     && ln -s "$ZSH_CUSTOM/themes/spaceship-prompt/spaceship.zsh-theme" "$ZSH_CUSTOM/themes/spaceship.zsh-theme" \
-    && sed -i "s|codespaces|spaceship|g" /root/.zshrc \
-    && echo "alias k=kubectl" >> /root/.zshrc
+    && sed -i "s|codespaces|spaceship|g" /home/${USERNAME}/.zshrc \
+    && echo "alias k=kubectl" >> /home/${USERNAME}/.zshrc
 
 RUN wget -q https://raw.githubusercontent.com/dapr/cli/master/install/install.sh -O - | /bin/bash
+
+ENV PATH "$PATH:/home/${USERNAME}/.dapr/bin"
 
 # [Optional] Uncomment this section to install additional OS packages.
 # RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
