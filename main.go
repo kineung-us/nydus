@@ -512,7 +512,7 @@ func callbacktoSource(cb *callback) error {
 	to, _ := strconv.Atoi(callbackTimeout)
 	timeOut := time.Duration(to) * time.Second
 
-	err := fasthttp.DoTimeout(req, resp, timeOut)
+	err = fasthttp.DoTimeout(req, resp, timeOut)
 	if err != nil {
 		return err
 	}
