@@ -252,7 +252,12 @@ func bodyMarshal(d map[string]interface{}, ct string) ([]byte, error) {
 	case strings.Contains(ct, "x-www-form-urlencoded"):
 		r := []string{}
 		for k, v := range d {
-			r = append(r, strings.Join([]string{k, fmt.Sprintf("%v", v)}, "="))
+			if v == nil {
+				r = append(r, k)
+			} else {
+				r = append(r, strings.Join([]string{k, fmt.Sprintf("%v", v)}, "="))
+			}
+
 		}
 		b = []byte(strings.Join(r, "&"))
 	default:
