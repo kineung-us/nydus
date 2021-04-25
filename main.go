@@ -106,6 +106,7 @@ func main() {
 		}
 	}()
 
+	// graceful shutdown
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 
@@ -140,16 +141,11 @@ func publishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 			hd[string(key)] = string(value)
 		})
 
-		b, err := bodyUnmarshal(c.Body(), c.Get("Content-Type"))
-		if err != nil {
-			return err
-		}
-
 		r := requestedData{
 			Method:  c.Method(),
 			URL:     c.BaseURL() + c.OriginalURL(),
 			Headers: hd,
-			Body:    b,
+			Body:    c.Body(),
 		}
 
 		pub := publishData{
@@ -158,11 +154,21 @@ func publishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 		}
 
 		ce := newCustomEvent(&pub, getTrace(c), c.Params("target"))
+
+		b, err := bodyUnmarshal(c.Body(), c.Get("Content-Type"))
+		if err != nil {
+			return err
+		}
+
+		cep := ce
+		cep.Data.Order.Body = []byte{}
+
 		log.Debug().
 			Str("traceid", ce.TraceID).
 			Str("service", subscribeTopic).
 			Str("route", c.OriginalURL()).
-			Interface("request", ce).
+			Interface("request", cep).
+			Interface("body", b).
 			Send()
 
 		// https://v1-rc3.docs.dapr.io/reference/api/pubsub_api/#http-response-codes
@@ -190,6 +196,12 @@ func publishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 			c.Set(k, v)
 		}
 		st, _ := strconv.Atoi(rm.Status)
+		rmp := rm
+		rmp.Body = []byte{}
+		rb, err := bodyUnmarshal(rm.Body, rm.Headers["Content-Type"])
+		if err != nil {
+			return err
+		}
 
 		after := time.Now()
 		log.Info().
@@ -198,8 +210,10 @@ func publishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 			Str("version", targetVersion).
 			Str("route", c.OriginalURL()).
 			Str("latency", after.Sub(before).String()).
-			Interface("request", ce).
-			Interface("response", rm).
+			Interface("request", cep).
+			Interface("requestBody", b).
+			Interface("response", rmp).
+			Interface("responseBody", rb).
 			Send()
 		return c.Status(st).Send(rm.Body)
 	}
@@ -214,6 +228,7 @@ func bodyUnmarshal(raw []byte, ct string) (map[string]interface{}, error) {
 		}
 	// case strings.Contains(ct, "xml"):
 	// 	log.Info().Str("xmlraw", string(raw)).Send()
+	// 	mxj.NewMapXml()
 	// 	if err := xml.Unmarshal(raw, &b); err != nil {
 	// 		return nil, fiber.NewError(500, "Body XML Unmarchal failed. Err: ", err.Error())
 	// 	}
@@ -319,10 +334,10 @@ func publishrequestevent(ce *customEvent) error {
 func newCustomEvent(pub *publishData, tid string, targetTopic string) *customEvent {
 	tz, _ := time.LoadLocation("UTC")
 	return &customEvent{
-		ID:     uuid.New(),
-		Source: "nydus",
-		// Type:            "com.dapr.event.sent",
-		// SpecVersion:     "1.0",
+		ID:              uuid.New(),
+		Source:          "nydus",
+		Type:            "com.dapr.event.sent",
+		SpecVersion:     "1.0",
 		DataContentType: "application/json",
 		Data:            pub,
 		Topic:           targetTopic,
@@ -332,10 +347,10 @@ func newCustomEvent(pub *publishData, tid string, targetTopic string) *customEve
 }
 
 type customEvent struct {
-	ID     uuid.UUID `json:"id"`
-	Source string    `json:"source"`
-	// Type            string       `json:"type"`
-	// SpecVersion     string       `json:"specversion"`
+	ID              uuid.UUID    `json:"id"`
+	Source          string       `json:"source"`
+	Type            string       `json:"type"`
+	SpecVersion     string       `json:"specversion"`
 	DataContentType string       `json:"datacontenttype"`
 	Topic           string       `json:"topic"`
 	TraceID         string       `json:"traceid,omitempty"`
@@ -354,10 +369,10 @@ type publishData struct {
 }
 
 type requestedData struct {
-	Method  string                 `json:"method"`
-	URL     string                 `json:"url"`
-	Headers map[string]string      `json:"headers"`
-	Body    map[string]interface{} `json:"body"`
+	Method  string            `json:"method"`
+	URL     string            `json:"url"`
+	Headers map[string]string `json:"headers"`
+	Body    []byte            `json:"body"`
 }
 
 // callbackHandler start
@@ -397,12 +412,18 @@ func invokeHandler(c *fiber.Ctx) error {
 	if err := json.Unmarshal(c.Body(), &ce); err != nil {
 		return fiber.NewError(500, "CloudEvent Data Unmarchal failed.")
 	}
-
+	cep := ce
+	cep.Data.Order.Body = []byte{}
+	b, err := bodyUnmarshal(ce.Data.Order.Body, ce.Data.Order.Headers["Content-Type"])
+	if err != nil {
+		return err
+	}
 	log.Debug().
 		Str("traceid", ce.TraceID).
 		Str("service", subscribeTopic).
 		Str("route", "/invoke").
-		Interface("request", ce).
+		Interface("request", cep).
+		Interface("requestBody", b).
 		Send()
 
 	ce.Data.updateHost(targetRoot)
@@ -415,17 +436,18 @@ func invokeHandler(c *fiber.Ctx) error {
 		}
 	}
 
-	bb, err := bodyUnmarshal(out.Body.([]byte), out.Headers["Content-Type"])
+	bb, err := bodyUnmarshal(out.Body, out.Headers["Content-Type"])
 	if err != nil {
 		return err
 	}
-	out.Body = bb
 
 	cb := callback{
 		Callback: ce.Data.Callback,
 		ID:       ce.ID,
 		Response: out,
 	}
+	cbp := cb
+	cbp.Response.Body = []byte{}
 
 	if err := callbacktoSource(&cb); err != nil {
 		return err
@@ -438,8 +460,10 @@ func invokeHandler(c *fiber.Ctx) error {
 		Str("version", targetVersion).
 		Str("route", "/invoke").
 		Str("latency", after.Sub(before).String()).
-		Interface("request", ce).
+		Interface("request", cep).
+		Interface("requestBody", b).
 		Interface("response", cb).
+		Interface("responseBody", bb).
 		Send()
 	return c.JSON(fiber.Map{"success": true})
 }
@@ -458,13 +482,9 @@ func requesttoTarget(in *requestedData) (out *responseData, err error) {
 	for k, v := range in.Headers {
 		req.Header.Set(k, v)
 	}
-	b, err := bodyMarshal(in.Body, in.Headers["Content-Type"])
-	if err != nil {
-		return
-	}
 
-	if string(b) != "null" {
-		req.SetBody(b)
+	if string(in.Body) != "null" {
+		req.SetBody(in.Body)
 	}
 
 	to, _ := strconv.Atoi(invokeTimeout)
@@ -508,16 +528,13 @@ func callbacktoSource(cb *callback) error {
 	for k, v := range cb.Response.Headers {
 		req.Header.Set(k, v)
 	}
-	bb, err := bodyMarshal(cb.Response.Body.(map[string]interface{}), cb.Response.Headers["Content-Type"])
-	if err != nil {
-		return err
-	}
-	req.SetBody(bb)
+
+	req.SetBody(cb.Response.Body)
 
 	to, _ := strconv.Atoi(callbackTimeout)
 	timeOut := time.Duration(to) * time.Second
 
-	err = fasthttp.DoTimeout(req, resp, timeOut)
+	err := fasthttp.DoTimeout(req, resp, timeOut)
 	if err != nil {
 		return err
 	}
@@ -541,7 +558,7 @@ type callback struct {
 type responseData struct {
 	Status  int               `json:"status"`
 	Headers map[string]string `json:"headers"`
-	Body    interface{}       `json:"body"`
+	Body    []byte            `json:"body"`
 }
 
 func setHost(r string, u *url.URL) string {
