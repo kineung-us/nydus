@@ -437,6 +437,12 @@ func invokeHandler(c *fiber.Ctx) error {
 	}
 	after := time.Now()
 
+	b, err := bodyUnmarshal(cb.Response.Body.([]byte), cb.Response.Headers["Content-Type"])
+	if err != nil {
+		return err
+	}
+	cb.Response.Body = b
+
 	log.Info().
 		Str("traceid", ce.TraceID).
 		Str("service", subscribeTopic).
@@ -545,7 +551,7 @@ type callback struct {
 type responseData struct {
 	Status  int               `json:"status"`
 	Headers map[string]string `json:"headers"`
-	Body    []byte            `json:"body"`
+	Body    interface{}       `json:"body"`
 }
 
 func setHost(r string, u *url.URL) string {
