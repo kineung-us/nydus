@@ -24,6 +24,8 @@ github.com/guiguan/caster v0.0.0-20191104051807-3736c4464f38 h1:oWETJozNAt29o9b0
 github.com/guiguan/caster v0.0.0-20191104051807-3736c4464f38/go.mod h1:giU/iWwQIOg/ND1ecR8raoyROxojrXL9osppnuI7MRY=
 github.com/json-iterator/go v1.1.10 h1:Kz6Cvnvv2wGdaG/V8yMvfkmNiXq9Ya2KUv4rouJJr68=
 github.com/json-iterator/go v1.1.10/go.mod h1:KdQUCv79m/52Kvf8AW2vK1V8akMuk1QjK/uOdHXbAo4=
+github.com/kisielk/godepgraph v0.0.0-20190626013829-57a7e4a651a9 h1:ZkWH0x1yafBo+Y2WdGGdszlJrMreMXWl7/dqpEkwsIk=
+github.com/kisielk/godepgraph v0.0.0-20190626013829-57a7e4a651a9/go.mod h1:Gb5YEgxqiSSVrXKWQxDcKoCM94NO5QAwOwTaVmIUAMI=
 github.com/klauspost/compress v1.10.7 h1:7rix8v8GpI3ZBb0nSozFRgbtXKv+hOe+qfEpZqybrAg=
 github.com/klauspost/compress v1.10.7/go.mod h1:aoV0uJVorq1K+umq18yTdKaF57EivdYsUV+/s2qKfXs=
 github.com/klauspost/compress v1.11.8/go.mod h1:aoV0uJVorq1K+umq18yTdKaF57EivdYsUV+/s2qKfXs=
