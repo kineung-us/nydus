@@ -2,60 +2,38 @@
 // https://github.com/microsoft/vscode-dev-containers/tree/v0.154.2/containers/go
 {
 	"name": "Go",
-	"build": {
-		"dockerfile": "Dockerfile",
-		"args": {
-			// Update the VARIANT arg to pick a version of Go: 1, 1.15, 1.14
-			"VARIANT": "1.15",
-			// Options
-			"INSTALL_NODE": "true",
-			"NODE_VERSION": "lts/*"
-		}
-	},
-
+	"dockerComposeFile": "docker-compose.yaml",
+	"service": "app",
+	"workspaceFolder": "/workspace",
 	// Set *default* container specific settings.json values on container create.
 	"settings": {
 		"terminal.integrated.shell.linux": "/bin/zsh",
-		"go.useGoProxyToCheckForToolUpdates": false,
+		"go.toolsManagement.checkForUpdates": "off",
 		"go.useLanguageServer": true,
 		"go.gopath": "/go",
 		"go.goroot": "/usr/local/go",
 		"go.toolsGopath": "/go/bin"
 	},
-
 	// Add the IDs of extensions you want installed when the container is created.
 	"extensions": [
-    "golang.Go",
-    "ms-azuretools.vscode-docker",
-    "ms-kubernetes-tools.vscode-kubernetes-tools",
-    "bierner.markdown-mermaid",
-    "tabnine.tabnine-vscode",
-	"mhutchie.git-graph",
-	"eamodio.gitlens"
+		"golang.Go",
+		"bierner.markdown-mermaid",
+		"tabnine.tabnine-vscode",
+		"mhutchie.git-graph",
+		"eamodio.gitlens"
 	],
-
-	"runArgs": [
-		"--cap-add=SYS_PTRACE", "--security-opt", "seccomp=unconfined",
-		// Uncomment the next line to use Docker from inside the container. See https://aka.ms/vscode-remote/samples/docker-in-docker for details.
-    "-v", "${env:HOME}/.ssh/:/home/vscode/.ssh",
-    // "-v", "${env:HOME}/.kube/config:/root/.kube/config",
-  ],
-
-	"mounts": [
-		"source=/var/run/docker.sock,target=/var/run/docker-host.sock,type=bind",
-    	"source=${env:HOME}${env:USERPROFILE}/.kube,target=/usr/local/share/kube-localhost,type=bind"
-  ],
-
-	"remoteEnv": {
-		"SYNC_LOCALHOST_KUBECONFIG": "true"
+	"containerEnv": {
+		"NYDUS_HTTP_PORT": "5000",
+		"SUBSCRIBE_PUBSUB_NAME": "pubsub",
+		"SUBSCRIBE_TOPIC_NAME": "echo",
+		"PUBLISH_PUBSUB_NAME": "pubsub",
+		"TARGET_ROOT": "https://httpbin.org",
+		"TARGET_VERSION": "external"
 	},
-
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
-
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "go version",
-
+	"postCreateCommand": "dapr uninstall && dapr init"
 	// Comment out connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
-	"remoteUser": "vscode"
+	// "remoteUser": "vscode"
 }
