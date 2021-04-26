@@ -4,7 +4,7 @@ metadata:
   name: {{ include "nydus.fullname" . }}-configmap
 data:
   DEBUG: "{{ .Values.nydus.debug }}"
-  NYDUS_HTTP_PORT: ":{{ .Values.nydus.port }}"
+  NYDUS_HTTP_PORT: "{{ .Values.nydus.port }}"
   SUBSCRIBE_PUBSUB_NAME: "{{ .Values.nydus.pubsub.name }}"
   SUBSCRIBE_TOPIC_NAME: "{{ .Values.nydus.pubsub.topic }}"
   TARGET_VERSION: "{{ .Values.nydus.target.version }}"

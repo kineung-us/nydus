@@ -1,0 +1,16 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"appId": "nydus",
+			"appPort": 5000,
+			"label": "daprd-debug",
+			"type": "daprd"
+		},
+		{
+			"appId": "nydus",
+			"label": "daprd-down",
+			"type": "daprd-down"
+		}
+	]
+}
