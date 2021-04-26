@@ -72,7 +72,7 @@ func RequesttoTarget(in *body.RequestedData) (out *body.ResponseData, err error)
 		return nil, err
 	}
 
-	if in.Method != "GET" {
+	if b != nil {
 		req.SetBody(b)
 	}
 
