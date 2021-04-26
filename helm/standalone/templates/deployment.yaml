@@ -22,6 +22,7 @@ spec:
         dapr.io/sidecar-memory-limit: 1000Mi
         dapr.io/sidecar-cpu-request: 100m
         dapr.io/sidecar-memory-request: 250Mi
+        dapr.io/http-max-request-size: "10"
         prometheus.io/scrape: "true"
         prometheus.io/port: "9090"
         prometheus.io/path: "/"
