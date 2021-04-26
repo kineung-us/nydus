@@ -20,7 +20,8 @@
 		"bierner.markdown-mermaid",
 		"tabnine.tabnine-vscode",
 		"mhutchie.git-graph",
-		"eamodio.gitlens"
+		"eamodio.gitlens",
+		"ms-azuretools.vscode-dapr"
 	],
 	"containerEnv": {
 		"NYDUS_HTTP_PORT": "5000",
