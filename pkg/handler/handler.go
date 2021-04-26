@@ -157,6 +157,7 @@ func PublishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 			Str("route", c.OriginalURL()).
 			Str("locate", "publish-start").
 			Str("requestMethod", c.Method()).
+			Str("contentType", c.Get("Content-Type")).
 			Str("requestBody", string(c.Body())).
 			Send()
 
