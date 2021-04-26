@@ -23,4 +23,9 @@ func TestUnmarshal(t *testing.T) {
 	fmt.Println(string(mar))
 	expected2 := []interface{}([]interface{}{map[string]interface{}{"Test": "Test"}, map[string]interface{}{"Test2": "Test2"}})
 	assert.Equal(t, expected2, actual, "기대값과 결과값이 다릅니다.")
+
+	actual, _ = body.Unmarshal([]byte(""), "")
+	fmt.Println(actual)
+	expected3 := ""
+	assert.Equal(t, expected3, actual, "기대값과 결과값이 다릅니다.")
 }

@@ -42,14 +42,16 @@ func Unmarshal(raw []byte, ct string) (interface{}, error) {
 	case strings.Contains(ct, "x-www-form-urlencoded"):
 		log.Debug().Str("form", string(raw)).Send()
 		ss := strings.Split(string(raw), "&")
+		f := map[string]interface{}{}
 		for _, s := range ss {
 			kv := strings.Split(s, "=")
 			if len(kv) == 1 {
-				b.(map[string]interface{})[kv[0]] = nil
+				f[kv[0]] = nil
 			} else {
-				b.(map[string]interface{})[kv[0]] = kv[1]
+				f[kv[0]] = kv[1]
 			}
 		}
+		b = f
 	case raw == nil:
 		b = nil
 	default:
