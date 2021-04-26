@@ -3,13 +3,12 @@ module nydus
 go 1.15
 
 require (
-	github.com/clbanning/mxj v1.8.4
+	github.com/clbanning/mxj/v2 v2.5.5
 	github.com/gofiber/fiber/v2 v2.8.0
 	github.com/gofiber/helmet/v2 v2.1.1
 	github.com/google/uuid v1.2.0
 	github.com/guiguan/caster v0.0.0-20191104051807-3736c4464f38
 	github.com/json-iterator/go v1.1.10
-	github.com/kisielk/godepgraph v0.0.0-20190626013829-57a7e4a651a9 // indirect
 	github.com/klauspost/compress v1.12.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect

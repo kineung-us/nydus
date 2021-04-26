@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/clbanning/mxj"
+	"github.com/clbanning/mxj/v2"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 )
@@ -38,7 +38,7 @@ func Unmarshal(raw []byte, ct string) (interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
-		b = j
+		b = map[string]interface{}(j)
 	case strings.Contains(ct, "x-www-form-urlencoded"):
 		log.Debug().Str("form", string(raw)).Send()
 		ss := strings.Split(string(raw), "&")
@@ -71,7 +71,8 @@ func Marshal(d interface{}, ct string) ([]byte, error) {
 		}
 		b = j
 	case strings.Contains(ct, "xml"):
-		mv := mxj.Map(d.(map[string]interface{}))
+		dm := d.(map[string]interface{})
+		mv := mxj.Map(dm)
 		xmlValue, err := mv.Xml()
 		if err != nil {
 			return nil, err
