@@ -54,7 +54,7 @@ func Unmarshal(raw []byte, ct string) (interface{}, error) {
 		b = nil
 	default:
 		log.Debug().Str("string", string(raw)).Send()
-		b.(map[string]interface{})["string"] = string(raw)
+		b = string(raw)
 	}
 	return b, nil
 }
@@ -88,7 +88,7 @@ func Marshal(d interface{}, ct string) ([]byte, error) {
 	case d == nil:
 		b = nil
 	default:
-		b = []byte(fmt.Sprintf("%v", d.(map[string]interface{})["string"]))
+		b = []byte(fmt.Sprintf("%v", d))
 	}
 	return b, nil
 }
