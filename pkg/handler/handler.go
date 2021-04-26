@@ -151,6 +151,15 @@ func PublishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 			hd[string(key)] = string(value)
 		})
 
+		log.Debug().
+			Str("traceid", getTrace(c)).
+			Str("service", subTopic).
+			Str("route", c.OriginalURL()).
+			Str("locate", "publish-start").
+			Str("requestMethod", c.Method()).
+			Str("requestBody", string(c.Body())).
+			Send()
+
 		b, err := body.Unmarshal(c.Body(), c.Get("Content-Type"))
 		if err != nil {
 			return fiber.NewError(500, "publishHandler: Request Body Unmarchal failed. Err: ", err.Error())
