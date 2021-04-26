@@ -12,6 +12,14 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
+var (
+	ppubsub    = env.PublishPubsub
+	ttl        = env.PublishPubsubTTL
+	pubTimeout = env.PublishTimeout
+	ivkTimeout = env.InvokeTimeout
+	cbTimeout  = env.CallbackTimeout
+)
+
 func Publishrequestevent(ce *body.CustomEvent) error {
 	req := fasthttp.AcquireRequest()
 	resp := fasthttp.AcquireResponse()
@@ -21,7 +29,7 @@ func Publishrequestevent(ce *body.CustomEvent) error {
 		fasthttp.ReleaseRequest(req)
 	}()
 
-	pubURL := "http://localhost:3500/v1.0/publish/" + env.PublishPubsub + "/" + ce.Topic + "?metadata.ttlInSeconds=" + env.PublishPubsubTTL
+	pubURL := "http://localhost:3500/v1.0/publish/" + ppubsub + "/" + ce.Topic + "?metadata.ttlInSeconds=" + ttl
 	req.SetRequestURI(pubURL)
 
 	req.Header.SetMethod("POST")
@@ -32,7 +40,7 @@ func Publishrequestevent(ce *body.CustomEvent) error {
 
 	req.SetBody(body)
 
-	to, _ := strconv.Atoi(env.PublishTimeout)
+	to, _ := strconv.Atoi(pubTimeout)
 	timeOut := time.Duration(to) * time.Second
 
 	err := fasthttp.DoTimeout(req, resp, timeOut)
@@ -68,7 +76,7 @@ func RequesttoTarget(in *body.RequestedData) (out *body.ResponseData, err error)
 		req.SetBody(b)
 	}
 
-	to, _ := strconv.Atoi(env.InvokeTimeout)
+	to, _ := strconv.Atoi(ivkTimeout)
 	timeOut := time.Duration(to) * time.Second
 
 	err = fasthttp.DoTimeout(req, resp, timeOut)
@@ -112,7 +120,7 @@ func CallbacktoSource(cb *body.Callback) error {
 
 	req.SetBody(cb.Response.Body.([]byte))
 
-	to, _ := strconv.Atoi(env.CallbackTimeout)
+	to, _ := strconv.Atoi(cbTimeout)
 	timeOut := time.Duration(to) * time.Second
 
 	err := fasthttp.DoTimeout(req, resp, timeOut)

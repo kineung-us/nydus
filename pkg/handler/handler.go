@@ -15,6 +15,14 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+var (
+	root     = env.TargetRoot
+	subTopic = env.SubscribeTopic
+	version  = env.TargetVersion
+	port     = env.ServiceAddress
+	IP       = env.ServiceIP
+)
+
 func InvokeHandler(c *fiber.Ctx) error {
 	before := time.Now()
 	ce := body.CustomEvent{}
@@ -25,13 +33,13 @@ func InvokeHandler(c *fiber.Ctx) error {
 
 	log.Debug().
 		Str("traceid", ce.TraceID).
-		Str("service", env.SubscribeTopic).
+		Str("service", subTopic).
 		Str("route", "/invoke").
 		Str("locate", "after-marshal").
 		Interface("request", ce).
 		Send()
 
-	ce.Data.UpdateHost(env.TargetRoot)
+	ce.Data.UpdateHost(root)
 	ce.PropTrace()
 
 	out, err := call.RequesttoTarget(ce.Data.Order)
@@ -43,7 +51,7 @@ func InvokeHandler(c *fiber.Ctx) error {
 
 	log.Debug().
 		Str("traceid", ce.TraceID).
-		Str("service", env.SubscribeTopic).
+		Str("service", subTopic).
 		Str("route", "/invoke").
 		Str("locate", "after-requesttoTarget").
 		Interface("request", ce).
@@ -62,7 +70,7 @@ func InvokeHandler(c *fiber.Ctx) error {
 
 	log.Debug().
 		Str("traceid", ce.TraceID).
-		Str("service", env.SubscribeTopic).
+		Str("service", subTopic).
 		Str("route", "/invoke").
 		Str("locate", "after-callback").
 		Interface("request", ce).
@@ -80,8 +88,8 @@ func InvokeHandler(c *fiber.Ctx) error {
 
 	log.Info().
 		Str("traceid", ce.TraceID).
-		Str("service", env.SubscribeTopic).
-		Str("version", env.TargetVersion).
+		Str("service", subTopic).
+		Str("version", version).
 		Str("route", "/invoke").
 		Str("latency", after.Sub(before).String()).
 		Interface("request", ce).
@@ -125,8 +133,8 @@ func LogHandler(c *fiber.Ctx) error {
 	}
 
 	log.Info().
-		Str("service", env.SubscribeTopic).
-		Str("version", env.TargetVersion).
+		Str("service", subTopic).
+		Str("version", version).
 		Str("route", c.OriginalURL()).
 		Str("contentType", c.Get("Content-Type")).
 		Interface("request", b).
@@ -157,14 +165,14 @@ func PublishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 
 		pub := body.PublishData{
 			Order:    &r,
-			Callback: "http://" + env.ServiceIP + ":" + env.ServiceAddress,
+			Callback: "http://" + IP + ":" + port,
 		}
 
 		ce := body.NewCustomEvent(&pub, getTrace(c), c.Params("target"))
 
 		log.Debug().
 			Str("traceid", ce.TraceID).
-			Str("service", env.SubscribeTopic).
+			Str("service", subTopic).
 			Str("route", c.OriginalURL()).
 			Interface("request", ce).
 			Send()
@@ -203,8 +211,8 @@ func PublishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 		after := time.Now()
 		log.Info().
 			Str("traceid", ce.TraceID).
-			Str("service", env.SubscribeTopic).
-			Str("version", env.TargetVersion).
+			Str("service", subTopic).
+			Str("version", version).
 			Str("route", c.OriginalURL()).
 			Str("latency", after.Sub(before).String()).
 			Interface("request", ce).
