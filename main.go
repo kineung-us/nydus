@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/clbanning/mxj"
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/guiguan/caster"
@@ -141,11 +142,16 @@ func publishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 			hd[string(key)] = string(value)
 		})
 
+		b, err := bodyUnmarshal(c.Body(), c.Get("Content-Type"))
+		if err != nil {
+			return fiber.NewError(500, "Body Unmarchal failed. Err: ", err.Error())
+		}
+
 		r := requestedData{
 			Method:  c.Method(),
 			URL:     c.BaseURL() + c.OriginalURL(),
 			Headers: hd,
-			Body:    c.Body(),
+			Body:    b,
 		}
 
 		pub := publishData{
@@ -155,20 +161,11 @@ func publishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 
 		ce := newCustomEvent(&pub, getTrace(c), c.Params("target"))
 
-		b, err := bodyUnmarshal(c.Body(), c.Get("Content-Type"))
-		if err != nil {
-			return err
-		}
-
-		cep := ce
-		cep.Data.Order.Body = []byte{}
-
 		log.Debug().
 			Str("traceid", ce.TraceID).
 			Str("service", subscribeTopic).
 			Str("route", c.OriginalURL()).
-			Interface("request", cep).
-			Interface("body", b).
+			Interface("request", ce).
 			Send()
 
 		// https://v1-rc3.docs.dapr.io/reference/api/pubsub_api/#http-response-codes
@@ -196,11 +193,10 @@ func publishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 			c.Set(k, v)
 		}
 		st, _ := strconv.Atoi(rm.Status)
-		rmp := rm
-		rmp.Body = []byte{}
-		rb, err := bodyUnmarshal(rm.Body, rm.Headers["Content-Type"])
+
+		rb, err := bodyMarshal(rm.Body, rm.Headers["Content-Type"])
 		if err != nil {
-			return err
+			return fiber.NewError(500, "Body Json Marchal failed. Err: ", err.Error())
 		}
 
 		after := time.Now()
@@ -210,12 +206,11 @@ func publishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 			Str("version", targetVersion).
 			Str("route", c.OriginalURL()).
 			Str("latency", after.Sub(before).String()).
-			Interface("request", cep).
-			Interface("requestBody", b).
-			Interface("response", rmp).
-			Interface("responseBody", rb).
+			Interface("request", ce).
+			Interface("response", rm).
 			Send()
-		return c.Status(st).Send(rm.Body)
+
+		return c.Status(st).Send(rb)
 	}
 }
 
@@ -224,14 +219,15 @@ func bodyUnmarshal(raw []byte, ct string) (map[string]interface{}, error) {
 	switch {
 	case strings.Contains(ct, "json"):
 		if err := json.Unmarshal(raw, &b); err != nil {
-			return nil, fiber.NewError(500, "Body Json Unmarchal failed. Err: ", err.Error())
+			return nil, err
 		}
-	// case strings.Contains(ct, "xml"):
-	// 	log.Info().Str("xmlraw", string(raw)).Send()
-	// 	mxj.NewMapXml()
-	// 	if err := xml.Unmarshal(raw, &b); err != nil {
-	// 		return nil, fiber.NewError(500, "Body XML Unmarchal failed. Err: ", err.Error())
-	// 	}
+	case strings.Contains(ct, "xml"):
+		log.Info().Str("xmlraw", string(raw)).Send()
+		j, err := mxj.NewMapXml(raw)
+		if err != nil {
+			return nil, err
+		}
+		b = j
 	case strings.Contains(ct, "x-www-form-urlencoded"):
 		log.Info().Str("body", string(raw)).Send()
 		ss := strings.Split(string(raw), "&")
@@ -255,15 +251,16 @@ func bodyMarshal(d map[string]interface{}, ct string) ([]byte, error) {
 	case strings.Contains(ct, "json"):
 		j, err := json.Marshal(d)
 		if err != nil {
-			return nil, fiber.NewError(500, "Body Json Marchal failed. Err: ", err.Error())
+			return nil, err
 		}
 		b = j
-	// case strings.Contains(ct, "xml"):
-	// 	x, err := xml.Marshal(d)
-	// 	if err != nil {
-	// 		return nil, fiber.NewError(500, "Body XML Marchal failed.")
-	// 	}
-	// 	b = x
+	case strings.Contains(ct, "xml"):
+		mv := mxj.Map(d)
+		xmlValue, err := mv.Xml()
+		if err != nil {
+			return nil, err
+		}
+		b = xmlValue
 	case strings.Contains(ct, "x-www-form-urlencoded"):
 		r := []string{}
 		for k, v := range d {
@@ -296,12 +293,6 @@ func getTrace(c *fiber.Ctx) string {
 func publishrequestevent(ce *customEvent) error {
 	req := fasthttp.AcquireRequest()
 	resp := fasthttp.AcquireResponse()
-	log.Info().
-		Str("stage", "pub-function").
-		Str("service", subscribeTopic).
-		Str("version", targetVersion).
-		Interface("request", ce).
-		Send()
 
 	defer func() {
 		fasthttp.ReleaseResponse(resp)
@@ -369,10 +360,10 @@ type publishData struct {
 }
 
 type requestedData struct {
-	Method  string            `json:"method"`
-	URL     string            `json:"url"`
-	Headers map[string]string `json:"headers"`
-	Body    []byte            `json:"body"`
+	Method  string                 `json:"method"`
+	URL     string                 `json:"url"`
+	Headers map[string]string      `json:"headers"`
+	Body    map[string]interface{} `json:"body"`
 }
 
 // callbackHandler start
@@ -383,11 +374,16 @@ func callbackHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 			hd[string(key)] = string(value)
 		})
 
+		b, err := bodyUnmarshal(c.Body(), c.Get("Content-Type"))
+		if err != nil {
+			return fiber.NewError(500, "Body Json Marchal failed. Err: ", err.Error())
+		}
+
 		m := message{
 			ID:      c.Params("id"),
 			Status:  c.Get("status"),
 			Headers: hd,
-			Body:    c.Body(),
+			Body:    b,
 		}
 
 		if ok := cst.TryPub(m); !ok {
@@ -401,7 +397,7 @@ type message struct {
 	ID      string
 	Status  string
 	Headers map[string]string
-	Body    []byte
+	Body    map[string]interface{}
 }
 
 // invokeHandler start
@@ -412,18 +408,12 @@ func invokeHandler(c *fiber.Ctx) error {
 	if err := json.Unmarshal(c.Body(), &ce); err != nil {
 		return fiber.NewError(500, "CloudEvent Data Unmarchal failed.")
 	}
-	cep := ce
-	cep.Data.Order.Body = []byte{}
-	b, err := bodyUnmarshal(ce.Data.Order.Body, ce.Data.Order.Headers["Content-Type"])
-	if err != nil {
-		return err
-	}
+
 	log.Debug().
 		Str("traceid", ce.TraceID).
 		Str("service", subscribeTopic).
 		Str("route", "/invoke").
-		Interface("request", cep).
-		Interface("requestBody", b).
+		Interface("request", ce).
 		Send()
 
 	ce.Data.updateHost(targetRoot)
@@ -436,18 +426,11 @@ func invokeHandler(c *fiber.Ctx) error {
 		}
 	}
 
-	bb, err := bodyUnmarshal(out.Body, out.Headers["Content-Type"])
-	if err != nil {
-		return err
-	}
-
 	cb := callback{
 		Callback: ce.Data.Callback,
 		ID:       ce.ID,
 		Response: out,
 	}
-	cbp := cb
-	cbp.Response.Body = []byte{}
 
 	if err := callbacktoSource(&cb); err != nil {
 		return err
@@ -460,11 +443,10 @@ func invokeHandler(c *fiber.Ctx) error {
 		Str("version", targetVersion).
 		Str("route", "/invoke").
 		Str("latency", after.Sub(before).String()).
-		Interface("request", cep).
-		Interface("requestBody", b).
+		Interface("request", ce).
 		Interface("response", cb).
-		Interface("responseBody", bb).
 		Send()
+
 	return c.JSON(fiber.Map{"success": true})
 }
 
@@ -483,8 +465,13 @@ func requesttoTarget(in *requestedData) (out *responseData, err error) {
 		req.Header.Set(k, v)
 	}
 
-	if string(in.Body) != "null" {
-		req.SetBody(in.Body)
+	b, err := bodyMarshal(in.Body, in.Headers["Content-Type"])
+	if err != nil {
+		return nil, err
+	}
+
+	if in.Method != "GET" {
+		req.SetBody(b)
 	}
 
 	to, _ := strconv.Atoi(invokeTimeout)

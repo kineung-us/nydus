@@ -3,6 +3,7 @@ module nydus
 go 1.15
 
 require (
+	github.com/clbanning/mxj v1.8.4
 	github.com/gofiber/fiber/v2 v2.8.0
 	github.com/gofiber/helmet/v2 v2.1.1
 	github.com/google/uuid v1.2.0
