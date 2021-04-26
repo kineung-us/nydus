@@ -52,7 +52,7 @@ spec:
           - configMapRef:
               name: {{ include "nydus.fullname" . }}-configmap
           env:
-          - name: MY_POD_IP
+          - name: NYDUS_HOST_IP
             valueFrom:
               fieldRef:
                 fieldPath: status.podIP
