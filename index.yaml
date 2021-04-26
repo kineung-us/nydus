@@ -3,12 +3,22 @@ entries:
   nydus:
   - apiVersion: v2
     appVersion: 1.16.0
-    created: "2021-04-09T01:07:59.310872Z"
+    created: "2021-04-26T15:12:16.251779+09:00"
     description: A Helm chart for Kubernetes
-    digest: 0b34ec676cc7788a0b5ef7ca75308bcaaa28fb158ac5cc3b7dd9452716712f70
+    digest: 084bac2bb6e959106f23000a1cdcf4f305f7388927823958211ab496e4f5f339
     name: nydus
     type: application
     urls:
-    - https://mrchypark.github.io/nydus/nydus-0.0.5.tgz
+    - nydus-0.0.9.tgz
+    version: 0.0.9
+  - apiVersion: v2
+    appVersion: 1.16.0
+    created: "2021-04-26T15:12:16.251174+09:00"
+    description: A Helm chart for Kubernetes
+    digest: e8618b4b0cc207430112cdf2638277fb435b06fdf217e8c65d0d20de2de936ff
+    name: nydus
+    type: application
+    urls:
+    - nydus-0.0.5.tgz
     version: 0.0.5
-generated: "2021-04-09T01:07:59.3069314Z"
+generated: "2021-04-26T15:12:16.246774+09:00"
