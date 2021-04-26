@@ -13,38 +13,51 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func Unmarshal(raw []byte, ct string) (map[string]interface{}, error) {
-	b := map[string]interface{}{}
+var (
+	subTopic = env.SubscribeTopic
+)
+
+func Unmarshal(raw []byte, ct string) (interface{}, error) {
+	var b interface{}
 	switch {
 	case strings.Contains(ct, "json"):
-		if err := json.Unmarshal(raw, &b); err != nil {
-			return nil, err
+		log.Debug().Str("json", string(raw)).Send()
+		d := map[string]interface{}{}
+		if err := json.Unmarshal(raw, &d); err != nil {
+			dd := []interface{}{}
+			if err := json.Unmarshal(raw, &dd); err != nil {
+				return nil, err
+			}
+			b = dd
+		} else {
+			b = d
 		}
 	case strings.Contains(ct, "xml"):
-		log.Info().Str("xmlraw", string(raw)).Send()
+		log.Debug().Str("xmlraw", string(raw)).Send()
 		j, err := mxj.NewMapXml(raw)
 		if err != nil {
 			return nil, err
 		}
 		b = j
 	case strings.Contains(ct, "x-www-form-urlencoded"):
-		log.Info().Str("body", string(raw)).Send()
+		log.Debug().Str("form", string(raw)).Send()
 		ss := strings.Split(string(raw), "&")
 		for _, s := range ss {
 			kv := strings.Split(s, "=")
 			if len(kv) == 1 {
-				b[kv[0]] = nil
+				b.(map[string]interface{})[kv[0]] = nil
 			} else {
-				b[kv[0]] = kv[1]
+				b.(map[string]interface{})[kv[0]] = kv[1]
 			}
 		}
 	default:
-		b["string"] = string(raw)
+		log.Debug().Str("string", string(raw)).Send()
+		b.(map[string]interface{})["string"] = string(raw)
 	}
 	return b, nil
 }
 
-func Marshal(d map[string]interface{}, ct string) ([]byte, error) {
+func Marshal(d interface{}, ct string) ([]byte, error) {
 	b := []byte{}
 	switch {
 	case strings.Contains(ct, "json"):
@@ -54,7 +67,7 @@ func Marshal(d map[string]interface{}, ct string) ([]byte, error) {
 		}
 		b = j
 	case strings.Contains(ct, "xml"):
-		mv := mxj.Map(d)
+		mv := mxj.Map(d.(map[string]interface{}))
 		xmlValue, err := mv.Xml()
 		if err != nil {
 			return nil, err
@@ -62,7 +75,7 @@ func Marshal(d map[string]interface{}, ct string) ([]byte, error) {
 		b = xmlValue
 	case strings.Contains(ct, "x-www-form-urlencoded"):
 		r := []string{}
-		for k, v := range d {
+		for k, v := range d.(map[string]interface{}) {
 			if v == nil {
 				r = append(r, k)
 			} else {
@@ -71,7 +84,7 @@ func Marshal(d map[string]interface{}, ct string) ([]byte, error) {
 		}
 		b = []byte(strings.Join(r, "&"))
 	default:
-		b = []byte(fmt.Sprintf("%v", d["string"]))
+		b = []byte(fmt.Sprintf("%v", d.(map[string]interface{})["string"]))
 	}
 	return b, nil
 }
@@ -99,17 +112,17 @@ type PublishData struct {
 }
 
 type RequestedData struct {
-	Method  string                 `json:"method"`
-	URL     string                 `json:"url"`
-	Headers map[string]string      `json:"headers"`
-	Body    map[string]interface{} `json:"body"`
+	Method  string            `json:"method"`
+	URL     string            `json:"url"`
+	Headers map[string]string `json:"headers"`
+	Body    interface{}       `json:"body"`
 }
 
 type Message struct {
 	ID      string
 	Status  string
 	Headers map[string]string
-	Body    map[string]interface{}
+	Body    interface{}
 }
 
 type Callback struct {
@@ -148,7 +161,7 @@ func setHost(r string, u *url.URL) string {
 	t, _ := url.Parse(r)
 	u.Scheme = t.Scheme
 	u.Host = t.Host + t.Path
-	u.Path = strings.ReplaceAll(u.Path, "/publish/"+env.SubscribeTopic, "")
+	u.Path = strings.ReplaceAll(u.Path, "/publish/"+subTopic, "")
 	h, _ := url.PathUnescape(u.String())
 	return h
 }
