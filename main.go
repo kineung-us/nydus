@@ -522,7 +522,7 @@ func callbacktoSource(cb *callback) error {
 		req.Header.Set(k, v)
 	}
 
-	req.SetBody(cb.Response.Body)
+	req.SetBody(cb.Response.Body.([]byte))
 
 	to, _ := strconv.Atoi(callbackTimeout)
 	timeOut := time.Duration(to) * time.Second
