@@ -159,9 +159,13 @@ func NewCustomEvent(pub *PublishData, tid string, targetTopic string) *CustomEve
 	}
 }
 
-func (p *PublishData) UpdateHost(r string) {
-	t, _ := url.Parse(p.Order.URL)
+func (p *PublishData) UpdateHost(r string) error {
+	t, err := url.Parse(p.Order.URL)
+	if err != nil {
+		return err
+	}
 	p.Order.URL = setHost(r, t)
+	return nil
 }
 
 func setHost(r string, u *url.URL) string {

@@ -39,7 +39,9 @@ func InvokeHandler(c *fiber.Ctx) error {
 		Interface("request", ce).
 		Send()
 
-	ce.Data.UpdateHost(root)
+	if err := ce.Data.UpdateHost(root); err != nil {
+		return fiber.NewError(500, "invokeHandler: UpdateHost Method failed. Err:", err.Error())
+	}
 	ce.PropTrace()
 
 	out, err := call.RequesttoTarget(ce.Data.Order)
