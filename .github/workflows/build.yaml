@@ -19,7 +19,7 @@ jobs:
         id: docker_meta
         uses: crazy-max/ghaction-docker-meta@v2.4.0
         with:
-          images: mrchypark/nydus
+          images: kineung/nydus
           tags: |
             type=semver,pattern={{version}}
       -
