@@ -72,6 +72,22 @@ func main() {
 		log.Info().Str("Server start", env.Nversion).
 			Str("Port", env.ServiceAddress).
 			Send()
+		log.Debug().
+			Str("stage", "env").
+			Bool("Debug", env.Debug).
+			Str("ServiceAddress", env.ServiceAddress).
+			Str("ServiceIP", env.ServiceIP).
+			Str("SubscribePubsub", env.SubscribePubsub).
+			Str("SubscribeTopic", env.SubscribeTopic).
+			Str("PublishPubsub", env.PublishPubsub).
+			Str("PublishPubsubTTL", env.PublishPubsubTTL).
+			Str("TargetRoot", env.TargetRoot).
+			Str("TargetVersion", env.TargetVersion).
+			Str("InvokeTimeout", env.InvokeTimeout).
+			Str("PublishTimeout", env.PublishTimeout).
+			Str("CallbackTimeout", env.CallbackTimeout).
+			Send()
+
 		if err := app.Listen(":" + env.ServiceAddress); err != nil {
 			log.Panic().Err(err).Send()
 		}
