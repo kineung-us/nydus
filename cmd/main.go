@@ -9,8 +9,6 @@ import (
 	"syscall"
 	"time"
 
-	jsoniter "github.com/json-iterator/go"
-
 	"github.com/guiguan/caster"
 
 	"github.com/gofiber/fiber/v2"
@@ -20,10 +18,6 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-)
-
-var (
-	json = jsoniter.ConfigCompatibleWithStandardLibrary
 )
 
 func main() {
