@@ -9,6 +9,7 @@ import (
 	"nydus/pkg/env"
 
 	jsoniter "github.com/json-iterator/go"
+	"github.com/rs/zerolog/log"
 	"github.com/valyala/fasthttp"
 )
 
@@ -23,6 +24,9 @@ var (
 )
 
 func Publishrequestevent(ce *body.CustomEvent) error {
+	log.Debug().
+		Str("func", "Publishrequestevent").
+		Send()
 	req := fasthttp.AcquireRequest()
 	resp := fasthttp.AcquireResponse()
 
@@ -45,8 +49,7 @@ func Publishrequestevent(ce *body.CustomEvent) error {
 	to, _ := strconv.Atoi(pubTimeout)
 	timeOut := time.Duration(to) * time.Second
 
-	err := fasthttp.DoTimeout(req, resp, timeOut)
-	if err != nil {
+	if err := fasthttp.DoTimeout(req, resp, timeOut); err != nil {
 		return err
 	}
 
@@ -69,9 +72,9 @@ func RequesttoTarget(in *body.RequestedData) (out *body.ResponseData, err error)
 		req.Header.Set(k, v)
 	}
 
-	b, err := body.Marshal(in.Body, in.Headers["Content-Type"])
-	if err != nil {
-		return nil, err
+	b, errm := body.Marshal(in.Body, in.Headers["Content-Type"])
+	if errm != nil {
+		return nil, errm
 	}
 
 	if b != nil {
@@ -81,8 +84,7 @@ func RequesttoTarget(in *body.RequestedData) (out *body.ResponseData, err error)
 	to, _ := strconv.Atoi(ivkTimeout)
 	timeOut := time.Duration(to) * time.Second
 
-	err = fasthttp.DoTimeout(req, resp, timeOut)
-	if err != nil {
+	if err := fasthttp.DoTimeout(req, resp, timeOut); err != nil {
 		return nil, err
 	}
 
@@ -125,8 +127,7 @@ func CallbacktoSource(cb *body.Callback) error {
 	to, _ := strconv.Atoi(cbTimeout)
 	timeOut := time.Duration(to) * time.Second
 
-	err := fasthttp.DoTimeout(req, resp, timeOut)
-	if err != nil {
+	if err := fasthttp.DoTimeout(req, resp, timeOut); err != nil {
 		return err
 	}
 

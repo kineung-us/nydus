@@ -30,7 +30,7 @@ func InvokeHandler(c *fiber.Ctx) error {
 	ce := body.CustomEvent{}
 
 	if err := json.Unmarshal(c.Body(), &ce); err != nil {
-		log.Error()
+		log.Error().Stack().Err(err).Send()
 		return fiber.NewError(500, "invokeHandler: CloudEvent Data Unmarchal failed. Err:", err.Error())
 	}
 
@@ -43,6 +43,7 @@ func InvokeHandler(c *fiber.Ctx) error {
 		Send()
 
 	if err := ce.Data.UpdateHost(root); err != nil {
+		log.Error().Stack().Err(err).Send()
 		return fiber.NewError(500, "invokeHandler: UpdateHost Method failed. Err:", err.Error())
 	}
 	ce.PropTrace()
@@ -70,6 +71,7 @@ func InvokeHandler(c *fiber.Ctx) error {
 	}
 
 	if err := call.CallbacktoSource(&cb); err != nil {
+		log.Error().Stack().Err(err).Send()
 		return fiber.NewError(500, "invokeHandler: CallbackTo Source Err: ", err.Error())
 	}
 
@@ -87,6 +89,7 @@ func InvokeHandler(c *fiber.Ctx) error {
 
 	b, err := body.Unmarshal(cb.Response.Body.([]byte), cb.Response.Headers["Content-Type"])
 	if err != nil {
+		log.Error().Stack().Err(err).Send()
 		return fiber.NewError(500, "invokeHandler: Response Body Unmarshal Err: ", err.Error())
 	}
 	cb.Response.Body = b
@@ -113,6 +116,7 @@ func CallbackHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 
 		b, err := body.Unmarshal(c.Body(), c.Get("Content-Type"))
 		if err != nil {
+			log.Error().Stack().Err(err).Send()
 			return fiber.NewError(500, "callbackHandler: Body Json Marchal failed. Err: ", err.Error())
 		}
 
@@ -124,6 +128,7 @@ func CallbackHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 		}
 
 		if ok := cst.TryPub(m); !ok {
+			log.Error().Stack().Err(err).Send()
 			return fiber.NewError(781, "callbackHandler: Caster delivery failed")
 		}
 		return c.SendStatus(204)
@@ -134,6 +139,7 @@ func LogHandler(c *fiber.Ctx) error {
 
 	b, err := body.Unmarshal(c.Body(), c.Get("Content-Type"))
 	if err != nil {
+		log.Error().Stack().Err(err).Send()
 		return fiber.NewError(500, "logHandler: Body Json Marchal failed. Err: ", err.Error())
 	}
 
@@ -168,6 +174,7 @@ func PublishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 
 		b, err := body.Unmarshal(c.Body(), c.Get("Content-Type"))
 		if err != nil {
+			log.Error().Stack().Err(err).Send()
 			return fiber.NewError(500, "publishHandler: Request Body Unmarchal failed. Err: ", err.Error())
 		}
 
@@ -194,6 +201,7 @@ func PublishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 
 		// https://v1-rc3.docs.dapr.io/reference/api/pubsub_api/#http-response-codes
 		if err := call.Publishrequestevent(ce); err != nil {
+			log.Error().Stack().Err(err).Send()
 			return fiber.NewError(500, "publishHandler: Fail to publish event. Err: ", err.Error())
 		}
 
@@ -220,6 +228,7 @@ func PublishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 
 		rb, err := body.Marshal(rm.Body, rm.Headers["Content-Type"])
 		if err != nil {
+			log.Error().Stack().Err(err).Send()
 			return fiber.NewError(500, "publishHandler: Response Body Json Marchal failed. Err: ", err.Error())
 		}
 
