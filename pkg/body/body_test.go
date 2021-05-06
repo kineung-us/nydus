@@ -5,7 +5,12 @@ import (
 	"nydus/pkg/body"
 	"testing"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
+)
+
+var (
+	json = jsoniter.ConfigCompatibleWithStandardLibrary
 )
 
 func TestUnmarshal(t *testing.T) {
@@ -28,4 +33,16 @@ func TestUnmarshal(t *testing.T) {
 	fmt.Println(actual)
 	expected3 := ""
 	assert.Equal(t, expected3, actual, "기대값과 결과값이 다릅니다.")
+}
+
+func TestUpdateHostt(t *testing.T) {
+	tem := `{"id":"531fe07d-05df-48d8-b868-e2a6d3450020","source":"botjosa","type":"com.dapr.event.sent","specversion":"1.0","datacontenttype":"application/json","topic":"botjosa","data":{"order":null,"callback":"","meta":null},"time":""}`
+	ce := body.CustomEvent{}
+
+	json.Unmarshal([]byte(tem), &ce)
+	fmt.Println(ce.Data.Order)
+
+	if err := ce.Data.UpdateHost("localhost:8080"); err != nil {
+		assert.EqualError(t, err, "order cannot be nil")
+	}
 }

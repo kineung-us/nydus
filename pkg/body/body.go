@@ -1,6 +1,7 @@
 package body
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 	"nydus/pkg/env"
@@ -161,6 +162,9 @@ func NewCustomEvent(pub *PublishData, tid string, targetTopic string) *CustomEve
 }
 
 func (p *PublishData) UpdateHost(r string) error {
+	if p.Order == nil {
+		return errors.New("order cannot be nil")
+	}
 	t, err := url.Parse(p.Order.URL)
 	if err != nil {
 		return err
