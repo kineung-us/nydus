@@ -1,7 +1,6 @@
 package call
 
 import (
-	"encoding/json"
 	"strconv"
 	"strings"
 	"time"
@@ -9,10 +8,13 @@ import (
 	"nydus/pkg/body"
 	"nydus/pkg/env"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/valyala/fasthttp"
 )
 
 var (
+	json = jsoniter.ConfigCompatibleWithStandardLibrary
+
 	ppubsub    = env.PublishPubsub
 	ttl        = env.PublishPubsubTTL
 	pubTimeout = env.PublishTimeout

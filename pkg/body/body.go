@@ -1,7 +1,6 @@
 package body
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/url"
 	"nydus/pkg/env"
@@ -10,10 +9,12 @@ import (
 
 	"github.com/clbanning/mxj/v2"
 	"github.com/google/uuid"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/rs/zerolog/log"
 )
 
 var (
+	json     = jsoniter.ConfigCompatibleWithStandardLibrary
 	subTopic = env.SubscribeTopic
 )
 

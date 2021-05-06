@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"encoding/json"
 	"strconv"
 	"time"
 
@@ -12,10 +11,13 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/guiguan/caster"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/rs/zerolog/log"
 )
 
 var (
+	json = jsoniter.ConfigCompatibleWithStandardLibrary
+
 	root     = env.TargetRoot
 	subTopic = env.SubscribeTopic
 	version  = env.TargetVersion
@@ -28,6 +30,7 @@ func InvokeHandler(c *fiber.Ctx) error {
 	ce := body.CustomEvent{}
 
 	if err := json.Unmarshal(c.Body(), &ce); err != nil {
+		log.Error()
 		return fiber.NewError(500, "invokeHandler: CloudEvent Data Unmarchal failed. Err:", err.Error())
 	}
 
