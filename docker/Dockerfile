@@ -1,11 +1,10 @@
-FROM golang:1.15.7 as builder
+FROM golang:1.16.4-alpine3.13 AS builder
 
 ARG APP_VERSION
 
-RUN apt-get update && apt-get install -y upx
+RUN apk add upx
 
 WORKDIR /src/
-ENV GO111MODULE=on
 COPY go.mod .
 COPY go.sum .
 RUN go mod download
