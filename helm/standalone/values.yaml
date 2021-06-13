@@ -8,7 +8,7 @@ image:
   repository: mrchypark/nydus
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "0.0.11"
+  tag: "0.1.2"
 
 imagePullSecrets: []
 nameOverride: ""
@@ -40,19 +40,28 @@ dapr:
   config: "tracing"
 
 nydus:
-  debug: "false"
-  port: "5000"
-  pubsub:
-    name: ""
-    topic: ""
-    ttl: "60"
+  http:
+    port: "5000" # default set
+  publish:
+    pubsub:
+      name: "" # required
+      ttl:
+        seconds: "60" # default set
+  subscribe:
+    pubsub:
+      name: ""
+    topic:
+      name: ""
   target:
-    root: ""
-    version: "external"
+    root: "" # required
+    version: "external" # default set
   timeout:
-    invoke: "60"
-    publish: "5"
-    callback: "5"
+    invoke:
+      seconds: "60" # default set
+    publish:
+      seconds: "3" # default set
+    callback:
+      seconds: "3" # default set
 
 resources:
   # We usually recommend not to specify default resources and to leave this as a conscious

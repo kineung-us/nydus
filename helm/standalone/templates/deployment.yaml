@@ -16,7 +16,7 @@ spec:
         dapr.io/enabled: "true"
         dapr.io/log-level: "{{ .Values.dapr.logLevel }}"
         dapr.io/app-id: "{{ include "nydus.fullname" . }}"
-        dapr.io/app-port: "{{ .Values.nydus.port }}"
+        dapr.io/app-port: "{{ .Values.nydus.http.port }}"
         dapr.io/config: "{{ .Values.dapr.config }}"
         dapr.io/sidecar-cpu-limit: 300m
         dapr.io/sidecar-memory-limit: 1000Mi
@@ -59,7 +59,7 @@ spec:
                 fieldPath: status.podIP
           ports:
             - name: http
-              containerPort: {{ .Values.nydus.port }}
+              containerPort: {{ .Values.nydus.http.port }}
               protocol: TCP
           livenessProbe:
             httpGet:
