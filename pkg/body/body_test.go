@@ -57,6 +57,15 @@ func TestUrlencode(t *testing.T) {
 	assert.Equal(t, "tem", ce.Data.Order, "기대값과 결과값이 다릅니다.")
 }
 
+func TestUrlencodeAddress(t *testing.T) {
+	tem := `{"id":"531fe07d-05df-48d8-b868-e2a6d3450020","source":"botjosa","type":"com.dapr.event.sent","specversion":"1.0","datacontenttype":"application/json","topic":"botjosa","data":{"order": {"url": "https://www.hello.com/publish/echo/path1/path2?q=PromptFAQ_010전환번호변경", "method": "get"},"callback":"","meta":null},"time":""}`
+	ce := body.CustomEvent{}
+	json.Unmarshal([]byte(tem), &ce)
+	ce.Data.UpdateHost("http://localhost:8080")
+	fmt.Println(ce.Data.Order)
+	assert.Equal(t, "tem", ce.Data.Order, "기대값과 결과값이 다릅니다.")
+}
+
 func TestSethost(t *testing.T) {
 	tem, _ := url.Parse("https://localhost:5000/publish/")
 	tt := body.SetHost("http://localhost:8080", tem)
