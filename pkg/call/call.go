@@ -36,6 +36,7 @@ func Publishrequestevent(ce *body.CustomEvent) error {
 	}()
 
 	pubURL := "http://localhost:3500/v1.0/publish/" + ppubsub + "/" + ce.Topic + "?metadata.ttlInSeconds=" + ttl
+
 	req.SetRequestURI(pubURL)
 
 	req.Header.SetMethod("POST")
@@ -45,6 +46,13 @@ func Publishrequestevent(ce *body.CustomEvent) error {
 	body, _ := json.Marshal(ce)
 
 	req.SetBody(body)
+
+	log.Debug().
+		Str("traceid", ce.TraceID).
+		Str("fucn", "Publishrequestevent").
+		Str("pubURL", pubURL).
+		Interface("request", body).
+		Send()
 
 	to, _ := strconv.Atoi(pubTimeout)
 	timeOut := time.Duration(to) * time.Second
