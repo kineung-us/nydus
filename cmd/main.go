@@ -14,6 +14,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/monitor"
 	"github.com/gofiber/fiber/v2/middleware/pprof"
+	"github.com/gofiber/fiber/v2/middleware/proxy"
 	"github.com/gofiber/helmet/v2"
 
 	"github.com/rs/zerolog"
@@ -67,11 +68,13 @@ func main() {
 	app.Post("/log", handler.LogHandler)
 	app.Post("/callback/:id", handler.CallbackHandler(cst))
 	app.Post("/invoke", handler.InvokeHandler)
+	app.All("/*", proxy.Forward(env.TargetRoot))
 
 	go func() {
 		log.Info().Str("Server start", env.Nversion).
 			Str("Port", env.ServiceAddress).
 			Send()
+
 		log.Debug().
 			Str("stage", "env").
 			Bool("Debug", env.Debug).

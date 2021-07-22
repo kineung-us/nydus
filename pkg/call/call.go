@@ -49,9 +49,15 @@ func Publishrequestevent(ce *body.CustomEvent) error {
 
 	log.Debug().
 		Str("traceid", ce.TraceID).
-		Str("fucn", "Publishrequestevent").
+		Str("func", "Publishrequestevent").
 		Str("pubURL", pubURL).
-		Interface("request", body).
+		Interface("request", ce).
+		Send()
+
+	log.Debug().
+		Str("traceid", ce.TraceID).
+		Str("func", "Publishrequestevent").
+		Interface("requestObj", req).
 		Send()
 
 	to, _ := strconv.Atoi(pubTimeout)
@@ -61,7 +67,12 @@ func Publishrequestevent(ce *body.CustomEvent) error {
 		return err
 	}
 
-	fasthttp.AcquireResponse()
+	log.Debug().
+		Str("traceid", ce.TraceID).
+		Str("func", "Publishrequestevent-publishend").
+		Int("StateCode", resp.StatusCode()).
+		Str("response", string(resp.Body())).
+		Send()
 	return nil
 }
 
