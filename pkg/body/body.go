@@ -34,7 +34,7 @@ func Unmarshal(raw []byte, ct string) (interface{}, error) {
 		} else {
 			b = d
 		}
-	case strings.Contains(ct, "xml"):
+	case strings.Contains(ct, "xml") || strings.Contains(ct, "html"):
 		log.Debug().Str("xmlraw", string(raw)).Send()
 		j, err := mxj.NewMapXml(raw)
 		if err != nil {
