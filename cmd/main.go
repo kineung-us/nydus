@@ -68,7 +68,14 @@ func main() {
 	app.Post("/log", handler.LogHandler)
 	app.Post("/callback/:id", handler.CallbackHandler(cst))
 	app.Post("/invoke", handler.InvokeHandler)
-	app.All("/*", proxy.Forward(env.TargetRoot + c.Params("*")))
+	app.All("/*", func(c *fiber.Ctx) error {
+		url := env.TargetRoot + c.Params("*")
+		if err := proxy.Do(c, url); err != nil {
+			return err
+		}
+		c.Response().Header.Del(fiber.HeaderServer)
+		return nil
+	})
 
 	go func() {
 		log.Info().Str("Server start", env.Nversion).
