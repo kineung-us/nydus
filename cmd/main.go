@@ -69,7 +69,7 @@ func main() {
 	app.Post("/callback/:id", handler.CallbackHandler(cst))
 	app.Post("/invoke", handler.InvokeHandler)
 	app.All("/*", func(c *fiber.Ctx) error {
-		url := env.TargetRoot + c.Params("*")
+		url := env.TargetRoot + "/" + c.Params("*")
 		if err := proxy.Do(c, url); err != nil {
 			return err
 		}
