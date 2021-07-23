@@ -70,7 +70,12 @@ func main() {
 	app.Post("/invoke", handler.InvokeHandler)
 	app.All("/*", func(c *fiber.Ctx) error {
 		url := env.TargetRoot + "/" + c.Params("*")
+		log.Debug().
+			Str("stage", "/*").
+			Str("ProxyAddress", url).
+			Send()
 		if err := proxy.Do(c, url); err != nil {
+			log.Panic().Err(err).Send()
 			return err
 		}
 		c.Response().Header.Del(fiber.HeaderServer)
