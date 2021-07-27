@@ -163,7 +163,7 @@ func NewCustomEvent(pub *PublishData, tid string, targetTopic string) *CustomEve
 
 func (p *PublishData) UpdateHost(r string) error {
 	if p.Order == nil {
-		return errors.New("order cannot be nil")
+		return errors.New("PublishData.Order cannot be nil")
 	}
 	t, err := url.Parse(p.Order.URL)
 	if err != nil {

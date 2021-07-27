@@ -10,6 +10,7 @@ import (
 	"nydus/pkg/env"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/proxy"
 	"github.com/guiguan/caster"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/rs/zerolog/log"
@@ -24,6 +25,20 @@ var (
 	port     = env.ServiceAddress
 	IP       = env.ServiceIP
 )
+
+func ProxyHendler(c *fiber.Ctx) error {
+	url := root + "/" + c.Params("*")
+	log.Debug().
+		Str("stage", "/*").
+		Str("ProxyAddress", url).
+		Send()
+	if err := proxy.Do(c, url); err != nil {
+		log.Panic().Err(err).Send()
+		return err
+	}
+	c.Response().Header.Del(fiber.HeaderServer)
+	return nil
+}
 
 func InvokeHandler(c *fiber.Ctx) error {
 	before := time.Now()
