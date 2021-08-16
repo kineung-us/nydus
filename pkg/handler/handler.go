@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"nydus/pkg/body"
 	"nydus/pkg/call"
 	"nydus/pkg/env"
@@ -71,6 +72,11 @@ func DaprInitChk(d *bool) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		log.Debug().Str("func", "DaprInitChk").
 			Bool("daprinit", *d).Send()
+
+		ctx := context.Background()
+		ctx = context.WithValue(ctx, "daprChk", *d)
+		c.SetUserContext(ctx)
+
 		if *d {
 			return c.Next()
 		}

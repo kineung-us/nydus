@@ -15,9 +15,13 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func PublishHandler(cst *caster.Caster, di *bool) func(c *fiber.Ctx) error {
+func PublishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
-		if !*di {
+		ctx := c.UserContext()
+
+		log.Debug().Str("func", "PublishHandler").
+			Bool("daprinit", ctx.Value("daprChk").(bool)).Send()
+		if !ctx.Value("daprChk").(bool) {
 			log.Debug().Str("func", "ProxyHandler").Send()
 			url := root + "/" + c.Params("*")
 			if err := proxy.Do(c, url); err != nil {
