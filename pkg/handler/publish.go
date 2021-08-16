@@ -17,7 +17,7 @@ import (
 
 func PublishHandler(cst *caster.Caster, di *bool) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
-		if *di {
+		if !*di {
 			log.Debug().Str("func", "ProxyHandler").Send()
 			url := root + "/" + c.Params("*")
 			if err := proxy.Do(c, url); err != nil {
