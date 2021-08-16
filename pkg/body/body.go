@@ -15,13 +15,18 @@ import (
 )
 
 var (
-	json     = jsoniter.ConfigCompatibleWithStandardLibrary
-	subTopic = env.SubscribeTopic
+	json      = jsoniter.ConfigCompatibleWithStandardLibrary
+	subTopic  = env.SubscribeTopic
+	xmlstring = env.XMLtoString
 )
 
 func Unmarshal(raw []byte, ct string) (interface{}, error) {
 	var b interface{}
 	switch {
+	case string(raw) == "":
+		b = raw
+	case raw == nil:
+		b = nil
 	case strings.Contains(ct, "json"):
 		log.Debug().Str("json", string(raw)).Send()
 		d := map[string]interface{}{}
@@ -35,12 +40,17 @@ func Unmarshal(raw []byte, ct string) (interface{}, error) {
 			b = d
 		}
 	case strings.Contains(ct, "xml") || strings.Contains(ct, "html"):
+		log.Debug().Bool("xmlstring", xmlstring).Send()
 		log.Debug().Str("xmlraw", string(raw)).Send()
-		j, err := mxj.NewMapXml(raw)
-		if err != nil {
-			return nil, err
+		if xmlstring {
+			b = string(raw)
+		} else {
+			j, err := mxj.NewMapXml(raw)
+			if err != nil {
+				return nil, err
+			}
+			b = map[string]interface{}(j)
 		}
-		b = map[string]interface{}(j)
 	case strings.Contains(ct, "x-www-form-urlencoded"):
 		log.Debug().Str("form", string(raw)).Send()
 		ss := strings.Split(string(raw), "&")
@@ -54,8 +64,6 @@ func Unmarshal(raw []byte, ct string) (interface{}, error) {
 			}
 		}
 		b = f
-	case raw == nil:
-		b = nil
 	default:
 		log.Debug().Str("string", string(raw)).Send()
 		b = string(raw)
@@ -73,13 +81,19 @@ func Marshal(d interface{}, ct string) ([]byte, error) {
 		}
 		b = j
 	case strings.Contains(ct, "xml"):
-		dm := d.(map[string]interface{})
-		mv := mxj.Map(dm)
-		xmlValue, err := mv.Xml()
-		if err != nil {
-			return nil, err
+		switch dt := d.(type) {
+		case map[string]interface{}:
+			dm := dt
+			mv := mxj.Map(dm)
+			xmlValue, err := mv.Xml()
+			if err != nil {
+				return nil, err
+			}
+			b = xmlValue
+		case string:
+			b = []byte(dt)
 		}
-		b = xmlValue
+
 	case strings.Contains(ct, "x-www-form-urlencoded"):
 		r := []string{}
 		for k, v := range d.(map[string]interface{}) {

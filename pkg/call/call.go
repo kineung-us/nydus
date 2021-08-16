@@ -1,12 +1,9 @@
 package call
 
 import (
-	"strconv"
-	"strings"
-	"time"
-
-	"nydus/pkg/body"
 	"nydus/pkg/env"
+	"strconv"
+	"time"
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/rs/zerolog/log"
@@ -21,136 +18,17 @@ var (
 	pubTimeout = env.PublishTimeout
 	ivkTimeout = env.InvokeTimeout
 	cbTimeout  = env.CallbackTimeout
+	dhzTimeout = env.DaprHealthzTimeout
 )
 
-func Publishrequestevent(ce *body.CustomEvent) error {
-	log.Debug().
-		Str("func", "Publishrequestevent").
-		Send()
-	req := fasthttp.AcquireRequest()
-	resp := fasthttp.AcquireResponse()
-
-	defer func() {
-		fasthttp.ReleaseResponse(resp)
-		fasthttp.ReleaseRequest(req)
-	}()
-
-	pubURL := "http://localhost:3500/v1.0/publish/" + ppubsub + "/" + ce.Topic + "?metadata.ttlInSeconds=" + ttl
-
-	req.SetRequestURI(pubURL)
-
-	req.Header.SetMethod("POST")
-
-	req.Header.SetContentType("application/cloudevents+json")
-	req.Header.Set("traceparent", ce.TraceID)
-	body, _ := json.Marshal(ce)
-
-	req.SetBody(body)
-
-	log.Debug().
-		Str("traceid", ce.TraceID).
-		Str("func", "Publishrequestevent").
-		Str("pubURL", pubURL).
-		Interface("request", ce).
-		Send()
-
-	log.Debug().
-		Str("traceid", ce.TraceID).
-		Str("func", "Publishrequestevent").
-		Interface("requestObj", req).
-		Send()
-
-	to, _ := strconv.Atoi(pubTimeout)
+func DaprHealthChk() bool {
+	log.Debug().Str("func", "DaprHealthChk").Send()
+	chk := false
+	to, _ := strconv.Atoi(dhzTimeout)
 	timeOut := time.Duration(to) * time.Second
-
-	if err := fasthttp.DoTimeout(req, resp, timeOut); err != nil {
-		return err
+	st, _, _ := fasthttp.GetTimeout(nil, "http://localhost:3500/v1.0/healthz", timeOut)
+	if st == 204 {
+		chk = true
 	}
-
-	log.Debug().
-		Str("traceid", ce.TraceID).
-		Str("func", "Publishrequestevent-publishend").
-		Int("StateCode", resp.StatusCode()).
-		Str("response", string(resp.Body())).
-		Send()
-	return nil
-}
-
-func RequesttoTarget(in *body.RequestedData) (out *body.ResponseData, err error) {
-	req := fasthttp.AcquireRequest()
-	resp := fasthttp.AcquireResponse()
-
-	defer func() {
-		fasthttp.ReleaseResponse(resp)
-		fasthttp.ReleaseRequest(req)
-	}()
-
-	req.SetRequestURI(in.URL)
-	req.Header.SetMethod(strings.ToUpper(in.Method))
-	for k, v := range in.Headers {
-		req.Header.Set(k, v)
-	}
-
-	b, errm := body.Marshal(in.Body, in.Headers["Content-Type"])
-	if errm != nil {
-		return nil, errm
-	}
-
-	if b != nil {
-		req.SetBody(b)
-	}
-
-	to, _ := strconv.Atoi(ivkTimeout)
-	timeOut := time.Duration(to) * time.Second
-
-	if err := fasthttp.DoTimeout(req, resp, timeOut); err != nil {
-		return nil, err
-	}
-
-	outraw := fasthttp.AcquireResponse()
-	resp.CopyTo(outraw)
-
-	hd := map[string]string{}
-	outraw.Header.VisitAll(func(key, value []byte) {
-		hd[string(key)] = string(value)
-	})
-
-	out = &body.ResponseData{
-		Status:  resp.StatusCode(),
-		Headers: hd,
-		Body:    outraw.Body(),
-	}
-
-	return out, nil
-}
-
-func CallbacktoSource(cb *body.Callback) error {
-	req := fasthttp.AcquireRequest()
-	resp := fasthttp.AcquireResponse()
-
-	defer func() {
-		fasthttp.ReleaseResponse(resp)
-		fasthttp.ReleaseRequest(req)
-	}()
-
-	req.SetRequestURI(cb.Callback + "/callback/" + cb.ID.String())
-	req.Header.SetMethod(strings.ToUpper("POST"))
-	req.Header.Set("status", strconv.Itoa(cb.Response.Status))
-
-	for k, v := range cb.Response.Headers {
-		req.Header.Set(k, v)
-	}
-
-	req.SetBody(cb.Response.Body.([]byte))
-
-	to, _ := strconv.Atoi(cbTimeout)
-	timeOut := time.Duration(to) * time.Second
-
-	if err := fasthttp.DoTimeout(req, resp, timeOut); err != nil {
-		return err
-	}
-
-	out := fasthttp.AcquireResponse()
-	resp.CopyTo(out)
-	return nil
+	return chk
 }

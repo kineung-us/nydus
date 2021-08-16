@@ -20,6 +20,10 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+var (
+	daprInit = false
+)
+
 func main() {
 
 	zerolog.TimeFieldFormat = time.RFC3339
@@ -61,13 +65,16 @@ func main() {
 		return c.JSON(sub)
 	})
 
+	app.Use("/*", handler.DaprInitChk(&daprInit))
+
 	app.Get("/", func(c *fiber.Ctx) error { return c.SendStatus(200) })
 
-	app.All("/publish/:target/*", handler.PublishHandler(cst))
+	app.All("/publish/:target/*", handler.PublishHandler(cst, &daprInit))
 	app.Post("/log", handler.LogHandler)
 	app.Post("/callback/:id", handler.CallbackHandler(cst))
 	app.Post("/invoke", handler.InvokeHandler)
-	app.All("/*", handler.ProxyHendler)
+
+	app.All("/*", handler.PublishHandler(cst, &daprInit))
 
 	go func() {
 		log.Info().Str("Server start", env.Nversion).
