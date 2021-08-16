@@ -24,9 +24,12 @@ var (
 	TargetRoot    = getEnvRequired("TARGET_ROOT")
 	TargetVersion = getEnvRequired("TARGET_VERSION")
 
-	InvokeTimeout   = getEnvVar("INVOKE_TIMEOUT", "60")
-	PublishTimeout  = getEnvVar("PUBLISH_TIMEOUT", "5")
-	CallbackTimeout = getEnvVar("CALLBACK_TIMEOUT", "5")
+	InvokeTimeout      = getEnvVar("INVOKE_TIMEOUT", "60")
+	PublishTimeout     = getEnvVar("PUBLISH_TIMEOUT", "5")
+	CallbackTimeout    = getEnvVar("CALLBACK_TIMEOUT", "5")
+	DaprHealthzTimeout = getEnvVar("DAPR_HEALTHZ_TIMEOUT", "5")
+
+	XMLtoString, _ = strconv.ParseBool(getEnvVar("XML_TO_STRING", "true"))
 )
 
 func getEnvVar(key, fallbackValue string) string {
