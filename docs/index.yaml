@@ -3,9 +3,9 @@ entries:
   nydus:
   - apiVersion: v2
     appVersion: 0.1.4
-    created: "2021-07-23T14:02:18.211063509Z"
+    created: "2021-08-16T13:51:00.219443775Z"
     description: A Helm chart for Kubernetes
-    digest: 27ac5a6705296d37dae80fb30c89923c6a156d85f20d8f9009f1f1ea3717cd2e
+    digest: 83c3fe849ee2f7bc28948206f2486a37114dc6389290d695382ea01930d6b492
     name: nydus
     type: application
     urls:
@@ -13,7 +13,7 @@ entries:
     version: 0.1.4
   - apiVersion: v2
     appVersion: 0.1.4-rc3
-    created: "2021-07-23T14:02:18.210473869Z"
+    created: "2021-08-16T13:51:00.218885565Z"
     description: A Helm chart for Kubernetes
     digest: 892f3aeb3b270072b969c2907cfa65a1877d8301f91ebd95b47bc721c06ae93d
     name: nydus
@@ -23,7 +23,7 @@ entries:
     version: 0.1.4-rc3
   - apiVersion: v2
     appVersion: 0.1.4-rc2
-    created: "2021-07-23T14:02:18.209818325Z"
+    created: "2021-08-16T13:51:00.218368256Z"
     description: A Helm chart for Kubernetes
     digest: 073fa7020b890aeae8da86f1d0fce19d297db43dec492b85f7a04df7047d8f95
     name: nydus
@@ -33,7 +33,7 @@ entries:
     version: 0.1.4-rc2
   - apiVersion: v2
     appVersion: 0.1.4-rc1
-    created: "2021-07-23T14:02:18.208199616Z"
+    created: "2021-08-16T13:51:00.217830147Z"
     description: A Helm chart for Kubernetes
     digest: 551a0e52273dde0a531c4c690e8ae43e886f6b27382e69a00f597223f0752db9
     name: nydus
@@ -43,7 +43,7 @@ entries:
     version: 0.1.4-rc1
   - apiVersion: v2
     appVersion: 0.1.4-rc
-    created: "2021-07-23T14:02:18.207449766Z"
+    created: "2021-08-16T13:51:00.217338839Z"
     description: A Helm chart for Kubernetes
     digest: 34907e1579a0e07742de343ab6e36026072b5f5532efeacf6673da7cbff7e55d
     name: nydus
@@ -53,7 +53,7 @@ entries:
     version: 0.1.4-rc
   - apiVersion: v2
     appVersion: 0.1.3
-    created: "2021-07-23T14:02:18.206213982Z"
+    created: "2021-08-16T13:51:00.21679443Z"
     description: A Helm chart for Kubernetes
     digest: 19aab98cbaab889aca308917041c756d719a9e384964c7aa48c75f7ca9b6fe67
     name: nydus
@@ -63,7 +63,7 @@ entries:
     version: 0.1.3
   - apiVersion: v2
     appVersion: 0.1.2
-    created: "2021-07-23T14:02:18.205694847Z"
+    created: "2021-08-16T13:51:00.21621332Z"
     description: A Helm chart for Kubernetes
     digest: 3d4e0aa6a2d4839d87622cb86a8ddb81f8d79ce098f064258b5c8dba84c4171a
     name: nydus
@@ -73,7 +73,7 @@ entries:
     version: 0.0.5
   - apiVersion: v2
     appVersion: 0.0.11
-    created: "2021-07-23T14:02:18.20513681Z"
+    created: "2021-08-16T13:51:00.21563461Z"
     description: A Helm chart for Kubernetes
     digest: 66d21efcf031f5656df98b36a64bab9155a1ae263ad22934736dee50d035cb07
     name: nydus
@@ -83,7 +83,7 @@ entries:
     version: 0.0.4
   - apiVersion: v2
     appVersion: 0.0.11
-    created: "2021-07-23T14:02:18.204673379Z"
+    created: "2021-08-16T13:51:00.215151602Z"
     description: A Helm chart for Kubernetes
     digest: a593e42d8103c5e933a1173dba135ac99597a7599380f0f74a61dbbab8500e24
     name: nydus
@@ -93,7 +93,7 @@ entries:
     version: 0.0.3
   - apiVersion: v2
     appVersion: 0.0.9
-    created: "2021-07-23T14:02:18.204172645Z"
+    created: "2021-08-16T13:51:00.214655393Z"
     description: A Helm chart for Kubernetes
     digest: d0ff9620a8939300402ce0092a612a258e94cdb9c16f428290986949432213bd
     name: nydus
@@ -101,4 +101,4 @@ entries:
     urls:
     - https://kineung-us.github.io/nydus/nydus-0.0.2.tgz
     version: 0.0.2
-generated: "2021-07-23T14:02:18.203450096Z"
+generated: "2021-08-16T13:51:00.213839879Z"
