@@ -67,7 +67,7 @@ func main() {
 
 	app.Use("/*", handler.DaprInitChk(&daprInit))
 
-	app.Get("/", func(c *fiber.Ctx) error { return c.SendStatus(200) })
+	app.Get("/healthz", func(c *fiber.Ctx) error { return c.SendStatus(200) })
 
 	app.All("/publish/:target/*", handler.PublishHandler(cst))
 	app.Post("/log", handler.LogHandler)
