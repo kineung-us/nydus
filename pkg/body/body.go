@@ -199,5 +199,8 @@ func SetHost(r string, u *url.URL) string {
 
 func URLencode(h string) string {
 	t, _ := url.Parse(h)
+	if t.Query().Encode() == "" {
+		return t.Scheme + "://" + t.Host + t.Path
+	}
 	return t.Scheme + "://" + t.Host + t.Path + "?" + t.Query().Encode()
 }
