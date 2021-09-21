@@ -62,46 +62,6 @@ entries:
     - https://kineung-us.github.io/nydus/nydus-0.1.4.tgz
     version: 0.1.4
   - apiVersion: v2
-    appVersion: 0.1.4-rc3
-    created: "2021-09-21T07:00:08.249107685Z"
-    description: A Helm chart for Kubernetes
-    digest: 892f3aeb3b270072b969c2907cfa65a1877d8301f91ebd95b47bc721c06ae93d
-    name: nydus
-    type: application
-    urls:
-    - https://kineung-us.github.io/nydus/nydus-0.1.4-rc3.tgz
-    version: 0.1.4-rc3
-  - apiVersion: v2
-    appVersion: 0.1.4-rc2
-    created: "2021-09-21T07:00:08.248131173Z"
-    description: A Helm chart for Kubernetes
-    digest: 073fa7020b890aeae8da86f1d0fce19d297db43dec492b85f7a04df7047d8f95
-    name: nydus
-    type: application
-    urls:
-    - https://kineung-us.github.io/nydus/nydus-0.1.4-rc2.tgz
-    version: 0.1.4-rc2
-  - apiVersion: v2
-    appVersion: 0.1.4-rc1
-    created: "2021-09-21T07:00:08.246811857Z"
-    description: A Helm chart for Kubernetes
-    digest: 551a0e52273dde0a531c4c690e8ae43e886f6b27382e69a00f597223f0752db9
-    name: nydus
-    type: application
-    urls:
-    - https://kineung-us.github.io/nydus/nydus-0.1.4-rc1.tgz
-    version: 0.1.4-rc1
-  - apiVersion: v2
-    appVersion: 0.1.4-rc
-    created: "2021-09-21T07:00:08.24627355Z"
-    description: A Helm chart for Kubernetes
-    digest: 34907e1579a0e07742de343ab6e36026072b5f5532efeacf6673da7cbff7e55d
-    name: nydus
-    type: application
-    urls:
-    - https://kineung-us.github.io/nydus/nydus-0.1.4-rc.tgz
-    version: 0.1.4-rc
-  - apiVersion: v2
     appVersion: 0.1.3
     created: "2021-09-21T07:00:08.245808844Z"
     description: A Helm chart for Kubernetes
