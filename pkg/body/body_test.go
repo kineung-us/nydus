@@ -44,7 +44,7 @@ func TestUpdateHost(t *testing.T) {
 	fmt.Println(ce.Data.Order)
 
 	if err := ce.Data.UpdateHost("localhost:8080"); err != nil {
-		assert.EqualError(t, err, "order cannot be nil")
+		assert.EqualError(t, err, "PublishData.Order cannot be nil")
 	}
 }
 
@@ -69,5 +69,11 @@ func TestUrlencodeAddress(t *testing.T) {
 func TestSethost(t *testing.T) {
 	tem, _ := url.Parse("https://localhost:5000/publish/")
 	tt := body.SetHost("http://localhost:8080", tem)
-	assert.Equal(t, "tem", tt, "기대값과 결과값이 다릅니다.")
+	assert.Equal(t, "http://localhost:8080/publish/", tt, "기대값과 결과값이 다릅니다.")
+}
+
+func Test_URLencode(t *testing.T) {
+	tem := "http://localhost:8000/predict?text=%EC%9D%B4%EB%B2%88+%EB%8B%AC+%EC%9A%94%EA%B8%88+%EC%96%BC%EB%A7%88+%EB%82%98%EC%99%94%EC%96%B4%3F"
+	te := body.URLencode(tem)
+	assert.Equal(t, "tem", te, "기대값과 결과값이 다릅니다.")
 }
