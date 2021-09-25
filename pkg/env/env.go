@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	Version  = getEnvVar("VERSION", "dev")
+	Version  = "dev"
 	Nversion = "nydus-" + Version
 	Debug, _ = strconv.ParseBool(getEnvVar("DEBUG", "false"))
 
