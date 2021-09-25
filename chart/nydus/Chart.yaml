@@ -1,0 +1,9 @@
+apiVersion: v2
+name: nydus
+description: A Helm chart for nydus standalone mode for k8s
+type: application
+version: "default"
+
+maintainers:
+  - name: Chanyub.Park
+    email: mrchypark@gmail.com

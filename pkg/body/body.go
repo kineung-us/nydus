@@ -184,7 +184,9 @@ func (p *PublishData) UpdateHost(r string) error {
 		return err
 	}
 	p.Order.URL = SetHost(r, t)
+	log.Debug().Str("Location", "Before URLencod").Interface("p.Order.URL", p.Order.URL).Send()
 	p.Order.URL = URLencode(p.Order.URL)
+	log.Debug().Str("Location", "After URLencod").Interface("p.Order.URL", p.Order.URL).Send()
 	return nil
 }
 

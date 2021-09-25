@@ -70,9 +70,9 @@ func main() {
 	app.Get("/healthz", func(c *fiber.Ctx) error { return c.SendStatus(200) })
 
 	app.All("/publish/:target/*", handler.PublishHandler(cst))
-	app.Post("/log", handler.LogHandler)
 	app.Post("/callback/:id", handler.CallbackHandler(cst))
 	app.Post("/invoke", handler.InvokeHandler)
+	app.Post("/log", handler.LogHandler)
 
 	app.All("/*", handler.PublishHandler(cst))
 
