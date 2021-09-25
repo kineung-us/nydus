@@ -9,7 +9,7 @@ COPY go.mod .
 COPY go.sum .
 RUN go mod download
 COPY . .
-RUN go build -a -ldflags "-w -s -X 'nydus/pkg/env.Version=${APP_VERSION}'" -o service cmd/main.go
+RUN CGO_ENABLED=0 go build -a -ldflags "-w -s -X 'nydus/pkg/env.Version=${APP_VERSION}'" -o service cmd/main.go
 RUN upx service
 
 FROM gcr.io/distroless/static:nonroot
