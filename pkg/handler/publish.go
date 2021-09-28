@@ -122,7 +122,6 @@ func PublishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 			Interface("response", rm).
 			Send()
 
-		log.Debug().Int("Status", st).Send()
 		return c.Status(st).Send(rb)
 	}
 }

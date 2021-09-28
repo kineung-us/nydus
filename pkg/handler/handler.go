@@ -38,7 +38,7 @@ func CallbackHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 
 		m := body.Message{
 			ID:      c.Params("id"),
-			Status:  c.Get("status"),
+			Status:  c.Get("Status"),
 			Headers: hd,
 			Body:    b,
 		}
