@@ -10,10 +10,11 @@ services:
         NODE_VERSION: "lts/*"
 
     environment:
+      - DEBUG=true
       - DAPR_NETWORK=dapr-dev-container
       - NYDUS_HTTP_PORT=5000
       - SUBSCRIBE_PUBSUB_NAME=pubsub
-      - SUBSCRIBE_TOPIC_NAME=echo
+      - SUBSCRIBE_TOPIC_NAME=local
       - PUBLISH_PUBSUB_NAME=pubsub
       - TARGET_ROOT=https://httpbin.org
       - TARGET_VERSION=external

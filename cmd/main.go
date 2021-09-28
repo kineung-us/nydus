@@ -50,6 +50,10 @@ func main() {
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	}
 
+	if !env.DaprHealthz {
+		daprInit = true
+	}
+
 	// https://v1-rc3.docs.dapr.io/developing-applications/building-blocks/pubsub/howto-publish-subscribe/
 	app.Get("/dapr/subscribe", func(c *fiber.Ctx) error {
 		sub := []struct {

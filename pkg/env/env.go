@@ -24,9 +24,12 @@ var (
 	TargetRoot    = getEnvRequired("TARGET_ROOT")
 	TargetVersion = getEnvRequired("TARGET_VERSION")
 
-	InvokeTimeout      = getEnvVar("INVOKE_TIMEOUT", "60")
-	PublishTimeout     = getEnvVar("PUBLISH_TIMEOUT", "5")
-	CallbackTimeout    = getEnvVar("CALLBACK_TIMEOUT", "5")
+	InvokeTimeout   = getEnvVar("INVOKE_TIMEOUT", "60")
+	PublishTimeout  = getEnvVar("PUBLISH_TIMEOUT", "5")
+	CallbackTimeout = getEnvVar("CALLBACK_TIMEOUT", "5")
+
+	DaprHealthz, _     = strconv.ParseBool(getEnvVar("DAPR_HEALTHZ", "false"))
+	DaprHealthzAddr    = getEnvVar("DAPR_HEALTHZ_ADDR", "http://localhost:3500/v1.0/healthz")
 	DaprHealthzTimeout = getEnvVar("DAPR_HEALTHZ_TIMEOUT", "5")
 
 	XMLtoString, _ = strconv.ParseBool(getEnvVar("XML_TO_STRING", "true"))

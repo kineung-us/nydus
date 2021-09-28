@@ -18,6 +18,7 @@ var (
 	pubTimeout = env.PublishTimeout
 	ivkTimeout = env.InvokeTimeout
 	cbTimeout  = env.CallbackTimeout
+	dhzaddr    = env.DaprHealthzAddr
 	dhzTimeout = env.DaprHealthzTimeout
 )
 
@@ -26,7 +27,7 @@ func DaprHealthChk() bool {
 	chk := false
 	to, _ := strconv.Atoi(dhzTimeout)
 	timeOut := time.Duration(to) * time.Second
-	st, _, _ := fasthttp.GetTimeout(nil, "http://localhost:3500/v1.0/healthz", timeOut)
+	st, _, _ := fasthttp.GetTimeout(nil, dhzaddr, timeOut)
 	if st == 204 {
 		chk = true
 	}

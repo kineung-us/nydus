@@ -4,8 +4,11 @@
     {
       "appId": "local",
       "appPort": 5000,
+      "httpPort": 3500,
       "label": "daprd-debug",
       "type": "daprd",
+      "logAsJson": true,
+      "logLevel": "debug",
       "componentsPath": "./components"
     },
     {
