@@ -28,7 +28,6 @@ var (
 	PublishTimeout  = getEnvVar("PUBLISH_TIMEOUT", "5")
 	CallbackTimeout = getEnvVar("CALLBACK_TIMEOUT", "5")
 
-	DaprHealthz, _     = strconv.ParseBool(getEnvVar("DAPR_HEALTHZ", "false"))
 	DaprHealthzAddr    = getEnvVar("DAPR_HEALTHZ_ADDR", "http://localhost:3500/v1.0/healthz")
 	DaprHealthzTimeout = getEnvVar("DAPR_HEALTHZ_TIMEOUT", "5")
 
