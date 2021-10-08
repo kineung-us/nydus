@@ -2,6 +2,7 @@ package call
 
 import (
 	"nydus/pkg/env"
+	"path"
 	"strconv"
 	"time"
 
@@ -18,6 +19,7 @@ var (
 	pubTimeout = env.PublishTimeout
 	ivkTimeout = env.InvokeTimeout
 	cbTimeout  = env.CallbackTimeout
+	troot      = env.TargetRoot
 	thzaddr    = env.TargetHealthzAddr
 	dhzaddr    = env.DaprHealthzAddr
 	dhzTimeout = env.DaprHealthzTimeout
@@ -39,6 +41,6 @@ func TargetHealthChk() int {
 	log.Debug().Str("func", "TargetHealthChk").Send()
 	to, _ := strconv.Atoi(dhzTimeout)
 	timeOut := time.Duration(to) * time.Second
-	st, _, _ := fasthttp.GetTimeout(nil, thzaddr, timeOut)
+	st, _, _ := fasthttp.GetTimeout(nil, path.Join(troot, thzaddr), timeOut)
 	return st
 }
