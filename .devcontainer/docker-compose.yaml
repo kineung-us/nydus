@@ -17,7 +17,8 @@ services:
       - SUBSCRIBE_TOPIC_NAME=local
       - PUBLISH_PUBSUB_NAME=pubsub
       - TARGET_ROOT=https://httpbin.org
-      - TARGET_VERSION=external
+      - TARGET_VERSION=externa
+      - TARGET_HEALTHZ_ADDR="/"
 
     init: true
     volumes:

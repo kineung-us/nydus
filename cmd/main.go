@@ -21,7 +21,8 @@ import (
 )
 
 var (
-	daprInit = false
+	daprInit   = false
+	targetInit = false
 )
 
 func main() {
@@ -66,8 +67,7 @@ func main() {
 	})
 
 	app.Use("/*", handler.DaprInitChk(&daprInit))
-
-	app.Get("/healthz", func(c *fiber.Ctx) error { return c.SendStatus(200) })
+	app.Get("/healthz", handler.TargetInitChk(&targetInit))
 
 	app.All("/publish/:target/*", handler.PublishHandler(cst))
 	app.Post("/callback/:id", handler.CallbackHandler(cst))

@@ -18,6 +18,7 @@ var (
 	pubTimeout = env.PublishTimeout
 	ivkTimeout = env.InvokeTimeout
 	cbTimeout  = env.CallbackTimeout
+	thzaddr    = env.TargetHealthzAddr
 	dhzaddr    = env.DaprHealthzAddr
 	dhzTimeout = env.DaprHealthzTimeout
 )
@@ -32,4 +33,12 @@ func DaprHealthChk() bool {
 		chk = true
 	}
 	return chk
+}
+
+func TargetHealthChk() int {
+	log.Debug().Str("func", "TargetHealthChk").Send()
+	to, _ := strconv.Atoi(dhzTimeout)
+	timeOut := time.Duration(to) * time.Second
+	st, _, _ := fasthttp.GetTimeout(nil, thzaddr, timeOut)
+	return st
 }

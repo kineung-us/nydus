@@ -21,8 +21,9 @@ var (
 	PublishPubsub    = getEnvRequired("PUBLISH_PUBSUB_NAME")
 	PublishPubsubTTL = getEnvVar("PUBLISH_PUBSUB_TTL", "60")
 
-	TargetRoot    = getEnvRequired("TARGET_ROOT")
-	TargetVersion = getEnvRequired("TARGET_VERSION")
+	TargetRoot        = getEnvRequired("TARGET_ROOT")
+	TargetHealthzAddr = getEnvRequired("TARGET_HEALTHZ_ADDR")
+	TargetVersion     = getEnvRequired("TARGET_VERSION")
 
 	InvokeTimeout   = getEnvVar("INVOKE_TIMEOUT", "60")
 	PublishTimeout  = getEnvVar("PUBLISH_TIMEOUT", "5")
