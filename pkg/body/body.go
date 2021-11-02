@@ -126,6 +126,7 @@ type CustomEvent struct {
 
 func (c *CustomEvent) PropTrace() {
 	c.Data.Order.Headers["traceparent"] = c.TraceID
+	c.Data.Order.Headers["traceid"] = c.TraceID
 }
 
 type PublishData struct {
