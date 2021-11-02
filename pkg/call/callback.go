@@ -32,11 +32,8 @@ func CallbacktoSource(cb *body.Callback) error {
 	to, _ := strconv.Atoi(cbTimeout)
 	timeOut := time.Duration(to) * time.Second
 
-	if err := fasthttp.DoTimeout(req, resp, timeOut); err != nil {
+	if err := client.DoTimeout(req, resp, timeOut); err != nil {
 		return err
 	}
-
-	out := fasthttp.AcquireResponse()
-	resp.CopyTo(out)
 	return nil
 }

@@ -37,22 +37,19 @@ func RequesttoTarget(in *body.RequestedData) (out *body.ResponseData, err error)
 	to, _ := strconv.Atoi(ivkTimeout)
 	timeOut := time.Duration(to) * time.Second
 
-	if err := fasthttp.DoTimeout(req, resp, timeOut); err != nil {
+	if err := client.DoTimeout(req, resp, timeOut); err != nil {
 		return nil, err
 	}
 
-	outraw := fasthttp.AcquireResponse()
-	resp.CopyTo(outraw)
-
 	hd := map[string]string{}
-	outraw.Header.VisitAll(func(key, value []byte) {
+	resp.Header.VisitAll(func(key, value []byte) {
 		hd[string(key)] = string(value)
 	})
 
 	out = &body.ResponseData{
 		Status:  resp.StatusCode(),
 		Headers: hd,
-		Body:    outraw.Body(),
+		Body:    resp.Body(),
 	}
 
 	return out, nil

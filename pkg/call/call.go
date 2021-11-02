@@ -23,6 +23,16 @@ var (
 	thzaddr    = env.TargetHealthzAddr
 	dhzaddr    = env.DaprHealthzAddr
 	dhzTimeout = env.DaprHealthzTimeout
+
+	client = &fasthttp.Client{
+		NoDefaultUserAgentHeader:      true,
+		MaxConnsPerHost:               10000,
+		ReadTimeout:                   time.Minute,
+		WriteTimeout:                  time.Second,
+		MaxIdleConnDuration:           time.Minute,
+		DisableHeaderNamesNormalizing: true,
+		MaxConnWaitTimeout:            time.Second,
+	}
 )
 
 func DaprHealthChk() bool {

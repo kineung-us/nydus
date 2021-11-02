@@ -50,7 +50,7 @@ func Publishrequestevent(ce *body.CustomEvent) error {
 	to, _ := strconv.Atoi(pubTimeout)
 	timeOut := time.Duration(to) * time.Second
 
-	if err := fasthttp.DoTimeout(req, resp, timeOut); err != nil {
+	if err := client.DoTimeout(req, resp, timeOut); err != nil {
 		return err
 	}
 
