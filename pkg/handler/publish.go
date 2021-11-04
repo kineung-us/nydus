@@ -42,7 +42,7 @@ func PublishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 		})
 
 		log.Debug().
-			Str("traceparent", getTrace(c)).
+			Str("TraceID", getTrace(c)).
 			Str("service", subTopic).
 			Str("route", c.OriginalURL()).
 			Str("locate", "publish-start").
@@ -72,7 +72,7 @@ func PublishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 		ce := body.NewCustomEvent(&pub, getTrace(c), getTarget(c))
 
 		log.Debug().
-			Str("traceparent", ce.Traceparent).
+			Str("TraceID", ce.TraceID).
 			Str("service", subTopic).
 			Str("route", c.OriginalURL()).
 			Interface("request", ce).
@@ -113,7 +113,7 @@ func PublishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 
 		after := time.Now()
 		log.Info().
-			Str("traceparent", ce.Traceparent).
+			Str("TraceID", ce.TraceID).
 			Str("service", subTopic).
 			Str("version", version).
 			Str("route", c.OriginalURL()).

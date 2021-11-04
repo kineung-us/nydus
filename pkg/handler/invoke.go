@@ -24,7 +24,7 @@ func InvokeHandler(c *fiber.Ctx) error {
 	}
 
 	log.Debug().
-		Str("traceparent", ce.Traceparent).
+		Str("TraceID", ce.TraceID).
 		Str("service", subTopic).
 		Str("route", "/invoke").
 		Str("locate", "after-marshal").
@@ -45,7 +45,7 @@ func InvokeHandler(c *fiber.Ctx) error {
 	}
 
 	log.Debug().
-		Str("traceparent", ce.Traceparent).
+		Str("TraceID", ce.TraceID).
 		Str("service", subTopic).
 		Str("route", "/invoke").
 		Str("locate", "after-requesttoTarget").
@@ -65,7 +65,7 @@ func InvokeHandler(c *fiber.Ctx) error {
 	}
 
 	log.Debug().
-		Str("traceparent", ce.Traceparent).
+		Str("TraceID", ce.TraceID).
 		Str("service", subTopic).
 		Str("route", "/invoke").
 		Str("locate", "after-callback").
@@ -84,7 +84,7 @@ func InvokeHandler(c *fiber.Ctx) error {
 	cb.Response.Body = b
 
 	log.Info().
-		Str("traceparent", ce.Traceparent).
+		Str("TraceID", ce.TraceID).
 		Str("service", subTopic).
 		Str("version", version).
 		Str("route", "/invoke").
