@@ -15,7 +15,7 @@ func InvokeHandler(c *fiber.Ctx) error {
 
 	log.Debug().
 		Str("stage", "invoke-start").
-		Interface("body", c.Body()).
+		Str("body", string(c.Body())).
 		Send()
 
 	if err := json.Unmarshal(c.Body(), &ce); err != nil {
