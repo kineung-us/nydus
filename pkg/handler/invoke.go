@@ -13,6 +13,11 @@ func InvokeHandler(c *fiber.Ctx) error {
 	before := time.Now()
 	ce := body.CustomEvent{}
 
+	log.Debug().
+		Str("stage", "invoke-start").
+		Interface("body", c.Body()).
+		Send()
+
 	if err := json.Unmarshal(c.Body(), &ce); err != nil {
 		log.Error().Stack().Err(err).Send()
 		return fiber.NewError(500, "invokeHandler: CloudEvent Data Unmarchal failed. Err:", err.Error())
