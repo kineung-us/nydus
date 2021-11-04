@@ -33,7 +33,6 @@ func main() {
 	}
 
 	app := fiber.New(fiber.Config{
-		Prefork:                   true,
 		ServerHeader:              env.Nversion,
 		Immutable:                 true,
 		BodyLimit:                 -1,
