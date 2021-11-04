@@ -19,6 +19,11 @@ func PublishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		ctx := c.UserContext()
 
+		log.Debug().
+			Str("stage", "publish-start").
+			Str("body", string(c.Body())).
+			Send()
+
 		log.Debug().Str("func", "PublishHandler").
 			Bool("daprinit", ctx.Value("daprChk").(bool)).Send()
 		if !ctx.Value("daprChk").(bool) {
@@ -42,7 +47,7 @@ func PublishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 		})
 
 		log.Debug().
-			Str("TraceID", getTrace(c)).
+			Str("traceid", getTrace(c)).
 			Str("service", subTopic).
 			Str("route", c.OriginalURL()).
 			Str("locate", "publish-start").
@@ -72,7 +77,7 @@ func PublishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 		ce := body.NewCustomEvent(&pub, getTrace(c), getTarget(c))
 
 		log.Debug().
-			Str("TraceID", ce.TraceID).
+			Str("traceid", ce.TraceID).
 			Str("service", subTopic).
 			Str("route", c.OriginalURL()).
 			Interface("request", ce).
@@ -113,7 +118,7 @@ func PublishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 
 		after := time.Now()
 		log.Info().
-			Str("TraceID", ce.TraceID).
+			Str("traceid", ce.TraceID).
 			Str("service", subTopic).
 			Str("version", version).
 			Str("route", c.OriginalURL()).
@@ -127,7 +132,7 @@ func PublishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 }
 
 func getTrace(c *fiber.Ctx) string {
-	return c.Get("traceparent")
+	return c.Get("traceparent") + c.Get("traceid")
 }
 
 func getTarget(c *fiber.Ctx) string {

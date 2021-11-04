@@ -25,6 +25,12 @@ var (
 
 func CallbackHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
+
+		log.Debug().
+			Str("stage", "callback-start").
+			Str("body", string(c.Body())).
+			Send()
+
 		hd := map[string]string{}
 		c.Request().Header.VisitAll(func(key, value []byte) {
 			hd[string(key)] = string(value)
@@ -52,6 +58,11 @@ func CallbackHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 }
 
 func LogHandler(c *fiber.Ctx) error {
+	log.Debug().
+		Str("stage", "log-start").
+		Str("body", string(c.Body())).
+		Send()
+
 	b, err := body.Unmarshal(c.Body(), c.Get("Content-Type"))
 	if err != nil {
 		log.Error().Stack().Err(err).Send()
@@ -70,6 +81,12 @@ func LogHandler(c *fiber.Ctx) error {
 
 func DaprInitChk(d *bool) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
+
+		log.Debug().
+			Str("stage", "daprinit-start").
+			Str("body", string(c.Body())).
+			Send()
+
 		log.Debug().Str("func", "DaprInitChk").
 			Bool("daprinit", *d).Send()
 
@@ -88,6 +105,12 @@ func DaprInitChk(d *bool) func(c *fiber.Ctx) error {
 
 func TargetInitChk(d *bool) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
+
+		log.Debug().
+			Str("stage", "targetinit-start").
+			Str("body", string(c.Body())).
+			Send()
+
 		log.Debug().Str("func", "TargetInitChk").
 			Bool("targetinit", *d).Send()
 

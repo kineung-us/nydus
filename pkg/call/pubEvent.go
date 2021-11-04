@@ -36,14 +36,14 @@ func Publishrequestevent(ce *body.CustomEvent) error {
 	req.SetBody(body)
 
 	log.Debug().
-		Str("TraceID", ce.TraceID).
+		Str("traceid", ce.TraceID).
 		Str("func", "Publishrequestevent").
 		Str("pubURL", pubURL).
 		Interface("request", ce).
 		Send()
 
 	log.Debug().
-		Str("TraceID", ce.TraceID).
+		Str("traceid", ce.TraceID).
 		Str("func", "Publishrequestevent").
 		Interface("requestObj", req).
 		Send()
@@ -56,7 +56,7 @@ func Publishrequestevent(ce *body.CustomEvent) error {
 	}
 
 	log.Debug().
-		Str("TraceID", ce.TraceID).
+		Str("traceid", ce.TraceID).
 		Str("func", "Publishrequestevent-publishend").
 		Int("StateCode", resp.StatusCode()).
 		Str("response", string(resp.Body())).
