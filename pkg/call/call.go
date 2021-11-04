@@ -26,12 +26,10 @@ var (
 
 	client = &fasthttp.Client{
 		NoDefaultUserAgentHeader:      true,
-		MaxConnsPerHost:               10000,
-		ReadTimeout:                   time.Minute,
-		WriteTimeout:                  time.Second,
-		MaxIdleConnDuration:           time.Minute,
+		MaxConnsPerHost:               env.ClientMaxConnsPerHost,
+		ReadTimeout:                   time.Second * time.Duration(env.ClientReadTimeoutSec),
+		WriteTimeout:                  time.Second * time.Duration(env.ClientWriteTimeoutSec),
 		DisableHeaderNamesNormalizing: true,
-		MaxConnWaitTimeout:            time.Second,
 	}
 )
 
@@ -40,7 +38,7 @@ func DaprHealthChk() bool {
 	chk := false
 	to, _ := strconv.Atoi(dhzTimeout)
 	timeOut := time.Duration(to) * time.Second
-	st, _, _ := fasthttp.GetTimeout(nil, dhzaddr, timeOut)
+	st, _, _ := client.GetTimeout(nil, dhzaddr, timeOut)
 	if st == 204 {
 		chk = true
 	}
@@ -51,6 +49,6 @@ func TargetHealthChk() int {
 	log.Debug().Str("func", "TargetHealthChk").Send()
 	to, _ := strconv.Atoi(dhzTimeout)
 	timeOut := time.Duration(to) * time.Second
-	st, _, _ := fasthttp.GetTimeout(nil, path.Join(troot, thzaddr), timeOut)
+	st, _, _ := client.GetTimeout(nil, path.Join(troot, thzaddr), timeOut)
 	return st
 }

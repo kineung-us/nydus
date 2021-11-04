@@ -33,10 +33,19 @@ func main() {
 	}
 
 	app := fiber.New(fiber.Config{
-		ServerHeader:             env.Nversion,
-		DisableHeaderNormalizing: true,
-		DisableStartupMessage:    true,
+		Prefork:                   true,
+		ServerHeader:              env.Nversion,
+		Immutable:                 true,
+		BodyLimit:                 -1,
+		ReadTimeout:               time.Second * time.Duration(env.ServerReadTimeoutSec),
+		WriteTimeout:              time.Second * time.Duration(env.ServerWriteTimeoutSec),
+		IdleTimeout:               time.Second * time.Duration(env.ServerIdleTimeoutSec),
+		DisableDefaultContentType: true,
+		DisableHeaderNormalizing:  true,
+		DisableStartupMessage:     true,
+		ReduceMemoryUsage:         true,
 	})
+
 	app.Use(helmet.New())
 
 	cst := caster.New(context.TODO())

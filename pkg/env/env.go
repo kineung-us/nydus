@@ -32,6 +32,14 @@ var (
 	DaprHealthzAddr    = getEnvVar("DAPR_HEALTHZ_ADDR", "http://localhost:3500/v1.0/healthz")
 	DaprHealthzTimeout = getEnvVar("DAPR_HEALTHZ_TIMEOUT", "5")
 
+	ClientMaxConnsPerHost, _ = strconv.Atoi(getEnvVar("CLIENT_MAX_CONNS_PER_HOST", "10000"))
+	ClientReadTimeoutSec, _  = strconv.Atoi(getEnvVar("CLIENT_READ_TIMEOUT_SEC", "100"))
+	ClientWriteTimeoutSec, _ = strconv.Atoi(getEnvVar("CLIENT_WRITE_TIMEOUT_SEC", "10"))
+
+	ServerReadTimeoutSec, _  = strconv.Atoi(getEnvVar("SERVER_READ_TIMEOUT_SEC", "100"))
+	ServerWriteTimeoutSec, _ = strconv.Atoi(getEnvVar("SERVER_WRITE_TIMEOUT_SEC", "10"))
+	ServerIdleTimeoutSec, _  = strconv.Atoi(getEnvVar("SERVER_IDLE_TIMEOUT_SEC", "100"))
+
 	XMLtoString, _ = strconv.ParseBool(getEnvVar("XML_TO_STRING", "true"))
 )
 

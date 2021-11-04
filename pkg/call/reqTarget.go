@@ -12,6 +12,7 @@ import (
 
 func RequesttoTarget(in *body.RequestedData) (out *body.ResponseData, err error) {
 	req := fasthttp.AcquireRequest()
+	req.Header.DisableNormalizing()
 	resp := fasthttp.AcquireResponse()
 
 	defer func() {

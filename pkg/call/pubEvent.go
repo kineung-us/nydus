@@ -15,6 +15,7 @@ func Publishrequestevent(ce *body.CustomEvent) error {
 		Str("func", "Publishrequestevent").
 		Send()
 	req := fasthttp.AcquireRequest()
+	req.Header.DisableNormalizing()
 	resp := fasthttp.AcquireResponse()
 
 	defer func() {
@@ -29,20 +30,20 @@ func Publishrequestevent(ce *body.CustomEvent) error {
 	req.Header.SetMethod("POST")
 
 	req.Header.SetContentType("application/cloudevents+json")
-	req.Header.Set("traceparent", ce.TraceID)
+	req.Header.Set("traceparent", ce.Traceparent)
 	body, _ := json.Marshal(ce)
 
 	req.SetBody(body)
 
 	log.Debug().
-		Str("traceid", ce.TraceID).
+		Str("traceparent", ce.Traceparent).
 		Str("func", "Publishrequestevent").
 		Str("pubURL", pubURL).
 		Interface("request", ce).
 		Send()
 
 	log.Debug().
-		Str("traceid", ce.TraceID).
+		Str("traceparent", ce.Traceparent).
 		Str("func", "Publishrequestevent").
 		Interface("requestObj", req).
 		Send()
@@ -55,7 +56,7 @@ func Publishrequestevent(ce *body.CustomEvent) error {
 	}
 
 	log.Debug().
-		Str("traceid", ce.TraceID).
+		Str("traceparent", ce.Traceparent).
 		Str("func", "Publishrequestevent-publishend").
 		Int("StateCode", resp.StatusCode()).
 		Str("response", string(resp.Body())).

@@ -119,14 +119,13 @@ type CustomEvent struct {
 	SpecVersion     string       `json:"specversion"`
 	DataContentType string       `json:"datacontenttype"`
 	Topic           string       `json:"topic"`
-	TraceID         string       `json:"traceid,omitempty"`
+	Traceparent     string       `json:"traceparent,omitempty"`
 	Data            *PublishData `json:"data"`
 	Time            string       `json:"time"`
 }
 
 func (c *CustomEvent) PropTrace() {
-	c.Data.Order.Headers["traceparent"] = c.TraceID
-	c.Data.Order.Headers["traceid"] = c.TraceID
+	c.Data.Order.Headers["traceparent"] = c.Traceparent
 }
 
 type PublishData struct {
@@ -171,7 +170,7 @@ func NewCustomEvent(pub *PublishData, tid string, targetTopic string) *CustomEve
 		DataContentType: "application/json",
 		Data:            pub,
 		Topic:           targetTopic,
-		TraceID:         tid,
+		Traceparent:     tid,
 		Time:            time.Now().In(tz).Format(time.RFC3339),
 	}
 }

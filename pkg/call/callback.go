@@ -12,6 +12,7 @@ import (
 
 func CallbacktoSource(cb *body.Callback) error {
 	req := fasthttp.AcquireRequest()
+	req.Header.DisableNormalizing()
 	resp := fasthttp.AcquireResponse()
 
 	defer func() {
