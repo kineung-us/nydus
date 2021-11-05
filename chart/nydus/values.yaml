@@ -57,11 +57,38 @@ nydus:
     version: "external" # default set
   timeout:
     invoke:
-      seconds: "60" # default set
+      seconds: "100" # default set
     publish:
-      seconds: "3" # default set
+      seconds: "10" # default set
     callback:
-      seconds: "3" # default set
+      seconds: "10" # default set
+  dapr:
+    healthz:
+      address: "http://localhost:3500/v1.0/healthz"
+    timeout:
+      seconds: "5"
+  client:
+    maxConnsPerHost: "10000"
+    headerNormalizing: "false"
+    timeout:
+      read:
+        seconds: "100"
+      write:
+        seconds: "10"
+  server:
+    headerNormalizing: "false"
+    timeout:
+      read:
+        seconds: "100"
+      write:
+        seconds: "10"
+      idle:
+        seconds: "100"
+  print:
+    default:
+      tostring: "false"
+    xml:
+      tostring: "true"
 
 resources:
   # We usually recommend not to specify default resources and to leave this as a conscious

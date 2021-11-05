@@ -33,13 +33,13 @@ var (
 	DaprHealthzTimeout, _ = strconv.Atoi(getEnvVar("DAPR_HEALTHZ_TIMEOUT", "5"))
 
 	ClientMaxConnsPerHost, _   = strconv.Atoi(getEnvVar("CLIENT_MAX_CONNS_PER_HOST", "10000"))
-	ClientReadTimeoutSec, _    = strconv.Atoi(getEnvVar("CLIENT_READ_TIMEOUT_SEC", "100"))
-	ClientWriteTimeoutSec, _   = strconv.Atoi(getEnvVar("CLIENT_WRITE_TIMEOUT_SEC", "10"))
+	ClientReadTimeoutSec, _    = strconv.Atoi(getEnvVar("CLIENT_READ_TIMEOUT", "100"))
+	ClientWriteTimeoutSec, _   = strconv.Atoi(getEnvVar("CLIENT_WRITE_TIMEOUT", "10"))
 	ClientHeaderNormalizing, _ = strconv.ParseBool(getEnvVar("CLIENT_HEADER_NORMALIZING", "false"))
 
-	ServerReadTimeoutSec, _    = strconv.Atoi(getEnvVar("SERVER_READ_TIMEOUT_SEC", "100"))
-	ServerWriteTimeoutSec, _   = strconv.Atoi(getEnvVar("SERVER_WRITE_TIMEOUT_SEC", "10"))
-	ServerIdleTimeoutSec, _    = strconv.Atoi(getEnvVar("SERVER_IDLE_TIMEOUT_SEC", "100"))
+	ServerReadTimeoutSec, _    = strconv.Atoi(getEnvVar("SERVER_READ_TIMEOUT", "100"))
+	ServerWriteTimeoutSec, _   = strconv.Atoi(getEnvVar("SERVER_WRITE_TIMEOUT", "10"))
+	ServerIdleTimeoutSec, _    = strconv.Atoi(getEnvVar("SERVER_IDLE_TIMEOUT", "100"))
 	ServerHeaderNormalizing, _ = strconv.ParseBool(getEnvVar("SERVER_HEADER_NORMALIZING", "false"))
 
 	XMLtoString, _ = strconv.ParseBool(getEnvVar("XML_TO_STRING", "true"))
