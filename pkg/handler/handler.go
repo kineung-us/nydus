@@ -36,15 +36,15 @@ func CallbackHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 			hd[string(key)] = string(value)
 		})
 
-		b, err := body.Unmarshal(c.Body(), c.Get("Content-Type"))
+		b, err := body.Unmarshal(c.Body(), getContentType(c))
 		if err != nil {
 			log.Error().Stack().Err(err).Send()
-			return fiber.NewError(500, "callbackHandler: Body Json Marchal failed. Err: ", err.Error())
+			return fiber.NewError(500, "callbackHandler: Body Marchal failed. Err: ", err.Error())
 		}
 
 		m := body.Message{
 			ID:      c.Params("id"),
-			Status:  c.Get("Status"),
+			Status:  getStatus(c),
 			Headers: hd,
 			Body:    b,
 		}
@@ -63,7 +63,7 @@ func LogHandler(c *fiber.Ctx) error {
 		Str("body", string(c.Body())).
 		Send()
 
-	b, err := body.Unmarshal(c.Body(), c.Get("Content-Type"))
+	b, err := body.Unmarshal(c.Body(), getContentType(c))
 	if err != nil {
 		log.Error().Stack().Err(err).Send()
 		return fiber.NewError(500, "logHandler: Body Json Marchal failed. Err: ", err.Error())
@@ -73,7 +73,7 @@ func LogHandler(c *fiber.Ctx) error {
 		Str("service", subTopic).
 		Str("version", version).
 		Str("route", c.OriginalURL()).
-		Str("contentType", c.Get("Content-Type")).
+		Str("contentType", getContentType(c)).
 		Interface("request", b).
 		Send()
 	return c.SendStatus(204)
@@ -128,4 +128,12 @@ func TargetInitChk(d *bool) func(c *fiber.Ctx) error {
 		}
 		return c.SendStatus(stat)
 	}
+}
+
+func getStatus(c *fiber.Ctx) string {
+	return c.Get("status") + c.Get("Status")
+}
+
+func getContentType(c *fiber.Ctx) string {
+	return c.Get("content-type") + c.Get("Content-Type")
 }

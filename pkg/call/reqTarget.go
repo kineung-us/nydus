@@ -1,7 +1,6 @@
 package call
 
 import (
-	"strconv"
 	"strings"
 	"time"
 
@@ -12,7 +11,9 @@ import (
 
 func RequesttoTarget(in *body.RequestedData) (out *body.ResponseData, err error) {
 	req := fasthttp.AcquireRequest()
-	req.Header.DisableNormalizing()
+	if !clHeaderNorm {
+		req.Header.DisableNormalizing()
+	}
 	resp := fasthttp.AcquireResponse()
 
 	defer func() {
@@ -35,8 +36,7 @@ func RequesttoTarget(in *body.RequestedData) (out *body.ResponseData, err error)
 		req.SetBody(b)
 	}
 
-	to, _ := strconv.Atoi(ivkTimeout)
-	timeOut := time.Duration(to) * time.Second
+	timeOut := time.Duration(ivkTimeout) * time.Second
 
 	if err := client.DoTimeout(req, resp, timeOut); err != nil {
 		return nil, err

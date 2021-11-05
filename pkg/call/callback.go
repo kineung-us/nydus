@@ -12,7 +12,9 @@ import (
 
 func CallbacktoSource(cb *body.Callback) error {
 	req := fasthttp.AcquireRequest()
-	req.Header.DisableNormalizing()
+	if !clHeaderNorm {
+		req.Header.DisableNormalizing()
+	}
 	resp := fasthttp.AcquireResponse()
 
 	defer func() {
@@ -30,8 +32,7 @@ func CallbacktoSource(cb *body.Callback) error {
 
 	req.SetBody(cb.Response.Body.([]byte))
 
-	to, _ := strconv.Atoi(cbTimeout)
-	timeOut := time.Duration(to) * time.Second
+	timeOut := time.Duration(cbTimeout) * time.Second
 
 	if err := client.DoTimeout(req, resp, timeOut); err != nil {
 		return err

@@ -17,7 +17,9 @@ import (
 var (
 	json      = jsoniter.ConfigCompatibleWithStandardLibrary
 	subTopic  = env.SubscribeTopic
+	dftstring = env.DFTtoString
 	xmlstring = env.XMLtoString
+	tz, _     = time.LoadLocation("UTC")
 )
 
 func Unmarshal(raw []byte, ct string) (interface{}, error) {
@@ -65,8 +67,13 @@ func Unmarshal(raw []byte, ct string) (interface{}, error) {
 		}
 		b = f
 	default:
+		log.Debug().Bool("dftstring", dftstring).Send()
 		log.Debug().Str("string", string(raw)).Send()
-		b = string(raw)
+		if xmlstring {
+			b = string(raw)
+		} else {
+			b = ""
+		}
 	}
 	return b, nil
 }
@@ -161,7 +168,6 @@ type ResponseData struct {
 }
 
 func NewCustomEvent(pub *PublishData, tid string, targetTopic string) *CustomEvent {
-	tz, _ := time.LoadLocation("UTC")
 	return &CustomEvent{
 		ID:              uuid.New(),
 		Source:          "nydus",

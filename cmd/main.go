@@ -23,6 +23,11 @@ import (
 var (
 	daprInit   = false
 	targetInit = false
+
+	svrReadTO     = env.ServerReadTimeoutSec
+	svrWriteTO    = env.ServerWriteTimeoutSec
+	svrIdleTO     = env.ServerIdleTimeoutSec
+	svrHeaderNorm = env.ServerHeaderNormalizing
 )
 
 func main() {
@@ -36,11 +41,11 @@ func main() {
 		ServerHeader:              env.Nversion,
 		Immutable:                 true,
 		BodyLimit:                 -1,
-		ReadTimeout:               time.Second * time.Duration(env.ServerReadTimeoutSec),
-		WriteTimeout:              time.Second * time.Duration(env.ServerWriteTimeoutSec),
-		IdleTimeout:               time.Second * time.Duration(env.ServerIdleTimeoutSec),
+		ReadTimeout:               time.Second * time.Duration(svrReadTO),
+		WriteTimeout:              time.Second * time.Duration(svrWriteTO),
+		IdleTimeout:               time.Second * time.Duration(svrIdleTO),
 		DisableDefaultContentType: true,
-		DisableHeaderNormalizing:  true,
+		DisableHeaderNormalizing:  !svrHeaderNorm,
 		DisableStartupMessage:     true,
 		ReduceMemoryUsage:         true,
 	})
@@ -100,9 +105,9 @@ func main() {
 			Str("PublishPubsubTTL", env.PublishPubsubTTL).
 			Str("TargetRoot", env.TargetRoot).
 			Str("TargetVersion", env.TargetVersion).
-			Str("InvokeTimeout", env.InvokeTimeout).
-			Str("PublishTimeout", env.PublishTimeout).
-			Str("CallbackTimeout", env.CallbackTimeout).
+			Int("InvokeTimeout", env.InvokeTimeout).
+			Int("PublishTimeout", env.PublishTimeout).
+			Int("CallbackTimeout", env.CallbackTimeout).
 			Send()
 
 		if err := app.Listen(":" + env.ServiceAddress); err != nil {

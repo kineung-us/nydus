@@ -19,28 +19,31 @@ var (
 	SubscribeTopic  = getEnvRequired("SUBSCRIBE_TOPIC_NAME")
 
 	PublishPubsub    = getEnvRequired("PUBLISH_PUBSUB_NAME")
-	PublishPubsubTTL = getEnvVar("PUBLISH_PUBSUB_TTL", "60")
+	PublishPubsubTTL = getEnvVar("PUBLISH_PUBSUB_TTL", "120")
 
 	TargetRoot        = getEnvRequired("TARGET_ROOT")
 	TargetHealthzAddr = getEnvRequired("TARGET_HEALTHZ_ADDR")
 	TargetVersion     = getEnvRequired("TARGET_VERSION")
 
-	InvokeTimeout   = getEnvVar("INVOKE_TIMEOUT", "60")
-	PublishTimeout  = getEnvVar("PUBLISH_TIMEOUT", "5")
-	CallbackTimeout = getEnvVar("CALLBACK_TIMEOUT", "5")
+	InvokeTimeout, _   = strconv.Atoi(getEnvVar("INVOKE_TIMEOUT", "100"))
+	PublishTimeout, _  = strconv.Atoi(getEnvVar("PUBLISH_TIMEOUT", "10"))
+	CallbackTimeout, _ = strconv.Atoi(getEnvVar("CALLBACK_TIMEOUT", "10"))
 
-	DaprHealthzAddr    = getEnvVar("DAPR_HEALTHZ_ADDR", "http://localhost:3500/v1.0/healthz")
-	DaprHealthzTimeout = getEnvVar("DAPR_HEALTHZ_TIMEOUT", "5")
+	DaprHealthzAddr       = getEnvVar("DAPR_HEALTHZ_ADDR", "http://localhost:3500/v1.0/healthz")
+	DaprHealthzTimeout, _ = strconv.Atoi(getEnvVar("DAPR_HEALTHZ_TIMEOUT", "5"))
 
-	ClientMaxConnsPerHost, _ = strconv.Atoi(getEnvVar("CLIENT_MAX_CONNS_PER_HOST", "10000"))
-	ClientReadTimeoutSec, _  = strconv.Atoi(getEnvVar("CLIENT_READ_TIMEOUT_SEC", "100"))
-	ClientWriteTimeoutSec, _ = strconv.Atoi(getEnvVar("CLIENT_WRITE_TIMEOUT_SEC", "10"))
+	ClientMaxConnsPerHost, _   = strconv.Atoi(getEnvVar("CLIENT_MAX_CONNS_PER_HOST", "10000"))
+	ClientReadTimeoutSec, _    = strconv.Atoi(getEnvVar("CLIENT_READ_TIMEOUT_SEC", "100"))
+	ClientWriteTimeoutSec, _   = strconv.Atoi(getEnvVar("CLIENT_WRITE_TIMEOUT_SEC", "10"))
+	ClientHeaderNormalizing, _ = strconv.ParseBool(getEnvVar("CLIENT_HEADER_NORMALIZING", "false"))
 
-	ServerReadTimeoutSec, _  = strconv.Atoi(getEnvVar("SERVER_READ_TIMEOUT_SEC", "100"))
-	ServerWriteTimeoutSec, _ = strconv.Atoi(getEnvVar("SERVER_WRITE_TIMEOUT_SEC", "10"))
-	ServerIdleTimeoutSec, _  = strconv.Atoi(getEnvVar("SERVER_IDLE_TIMEOUT_SEC", "100"))
+	ServerReadTimeoutSec, _    = strconv.Atoi(getEnvVar("SERVER_READ_TIMEOUT_SEC", "100"))
+	ServerWriteTimeoutSec, _   = strconv.Atoi(getEnvVar("SERVER_WRITE_TIMEOUT_SEC", "10"))
+	ServerIdleTimeoutSec, _    = strconv.Atoi(getEnvVar("SERVER_IDLE_TIMEOUT_SEC", "100"))
+	ServerHeaderNormalizing, _ = strconv.ParseBool(getEnvVar("SERVER_HEADER_NORMALIZING", "false"))
 
 	XMLtoString, _ = strconv.ParseBool(getEnvVar("XML_TO_STRING", "true"))
+	DFTtoString, _ = strconv.ParseBool(getEnvVar("DEFAULT_TO_STRING", "false"))
 )
 
 func getEnvVar(key, fallbackValue string) string {

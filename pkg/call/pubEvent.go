@@ -1,7 +1,6 @@
 package call
 
 import (
-	"strconv"
 	"time"
 
 	"nydus/pkg/body"
@@ -14,8 +13,11 @@ func Publishrequestevent(ce *body.CustomEvent) error {
 	log.Debug().
 		Str("func", "Publishrequestevent").
 		Send()
+
 	req := fasthttp.AcquireRequest()
-	req.Header.DisableNormalizing()
+	if !clHeaderNorm {
+		req.Header.DisableNormalizing()
+	}
 	resp := fasthttp.AcquireResponse()
 
 	defer func() {
@@ -30,7 +32,7 @@ func Publishrequestevent(ce *body.CustomEvent) error {
 	req.Header.SetMethod("POST")
 
 	req.Header.SetContentType("application/cloudevents+json")
-	req.Header.Set("TraceID", ce.TraceID)
+	req.Header.Set("traceparent", ce.TraceID)
 	body, _ := json.Marshal(ce)
 
 	req.SetBody(body)
@@ -48,8 +50,7 @@ func Publishrequestevent(ce *body.CustomEvent) error {
 		Interface("requestObj", req).
 		Send()
 
-	to, _ := strconv.Atoi(pubTimeout)
-	timeOut := time.Duration(to) * time.Second
+	timeOut := time.Duration(pubTimeout) * time.Second
 
 	if err := client.DoTimeout(req, resp, timeOut); err != nil {
 		return err
