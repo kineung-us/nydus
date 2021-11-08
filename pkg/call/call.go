@@ -19,7 +19,7 @@ var (
 	ivkTimeout   = env.InvokeTimeout
 	cbTimeout    = env.CallbackTimeout
 	troot        = env.TargetRoot
-	thzaddr      = env.TargetHealthzAddr
+	thzpath      = env.TargetHealthzPath
 	dhzaddr      = env.DaprHealthzAddr
 	dhzTimeout   = time.Duration(env.DaprHealthzTimeout) * time.Second
 	clHeaderNorm = env.ClientHeaderNormalizing
@@ -56,9 +56,9 @@ func DaprHealthChk() bool {
 }
 
 func TargetHealthChk() int {
-	t := path.Join(troot, thzaddr)
+	troot.Path = path.Join(troot.Path, thzpath)
 	log.Debug().Str("func", "TargetHealthChk").
-		Str("address", t).Send()
+		Str("address", troot.String()).Send()
 
 	req := fasthttp.AcquireRequest()
 	resp := fasthttp.AcquireResponse()
@@ -68,7 +68,7 @@ func TargetHealthChk() int {
 		fasthttp.ReleaseRequest(req)
 	}()
 
-	req.SetRequestURI(t)
+	req.SetRequestURI(troot.String())
 
 	if err := client.DoTimeout(req, resp, dhzTimeout); err != nil {
 		log.Error().Stack().Err(err).Send()

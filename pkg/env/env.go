@@ -2,6 +2,7 @@ package env
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -21,8 +22,8 @@ var (
 	PublishPubsub    = getEnvRequired("PUBLISH_PUBSUB_NAME")
 	PublishPubsubTTL = getEnvVar("PUBLISH_PUBSUB_TTL", "120")
 
-	TargetRoot        = getEnvRequired("TARGET_ROOT")
-	TargetHealthzAddr = getEnvRequired("TARGET_HEALTHZ_ADDR")
+	TargetRoot, _     = url.Parse(getEnvRequired("TARGET_ROOT"))
+	TargetHealthzPath = getEnvRequired("TARGET_HEALTHZ_PATH")
 	TargetVersion     = getEnvRequired("TARGET_VERSION")
 
 	InvokeTimeout, _   = strconv.Atoi(getEnvVar("INVOKE_TIMEOUT", "100"))
