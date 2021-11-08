@@ -21,7 +21,7 @@ var (
 	troot        = env.TargetRoot
 	thzaddr      = env.TargetHealthzAddr
 	dhzaddr      = env.DaprHealthzAddr
-	dhzTimeout   = env.DaprHealthzTimeout
+	dhzTimeout   = time.Duration(env.DaprHealthzTimeout) * time.Second
 	clHeaderNorm = env.ClientHeaderNormalizing
 
 	client = &fasthttp.Client{
@@ -34,7 +34,7 @@ var (
 )
 
 func DaprHealthChk() bool {
-	log.Debug().Str("func", "DaprHealthChk").Send()
+	log.Debug().Str("func", "DaprHealthChk").Str("address", dhzaddr).Send()
 	req := fasthttp.AcquireRequest()
 	resp := fasthttp.AcquireResponse()
 
@@ -44,7 +44,8 @@ func DaprHealthChk() bool {
 	}()
 
 	req.SetRequestURI(dhzaddr)
-	if err := client.DoTimeout(req, resp, time.Duration(dhzTimeout)*time.Second); err != nil {
+	if err := client.DoTimeout(req, resp, dhzTimeout); err != nil {
+		log.Error().Stack().Err(err).Send()
 		return false
 	}
 
@@ -55,7 +56,9 @@ func DaprHealthChk() bool {
 }
 
 func TargetHealthChk() int {
-	log.Debug().Str("func", "TargetHealthChk").Send()
+	t := path.Join(troot, thzaddr)
+	log.Debug().Str("func", "TargetHealthChk").
+		Str("address", t).Send()
 
 	req := fasthttp.AcquireRequest()
 	resp := fasthttp.AcquireResponse()
@@ -65,9 +68,9 @@ func TargetHealthChk() int {
 		fasthttp.ReleaseRequest(req)
 	}()
 
-	req.SetRequestURI(path.Join(troot, thzaddr))
+	req.SetRequestURI(t)
 
-	if err := client.DoTimeout(req, resp, time.Duration(dhzTimeout)*time.Second); err != nil {
+	if err := client.DoTimeout(req, resp, dhzTimeout); err != nil {
 		log.Error().Stack().Err(err).Send()
 		return 400
 	}
