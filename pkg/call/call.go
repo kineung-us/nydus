@@ -68,6 +68,7 @@ func TargetHealthChk() int {
 	req.SetRequestURI(path.Join(troot, thzaddr))
 
 	if err := client.DoTimeout(req, resp, time.Duration(dhzTimeout)*time.Second); err != nil {
+		log.Error().Stack().Err(err).Send()
 		return 400
 	}
 
