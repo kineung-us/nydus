@@ -35,17 +35,41 @@ var (
 
 func DaprHealthChk() bool {
 	log.Debug().Str("func", "DaprHealthChk").Send()
-	chk := false
-	st, _, _ := client.GetTimeout(nil, dhzaddr, time.Duration(dhzTimeout)*time.Second)
-	if st == 204 {
-		chk = true
+	req := fasthttp.AcquireRequest()
+	resp := fasthttp.AcquireResponse()
+
+	defer func() {
+		fasthttp.ReleaseResponse(resp)
+		fasthttp.ReleaseRequest(req)
+	}()
+
+	req.SetRequestURI(dhzaddr)
+	if err := client.DoTimeout(req, resp, time.Duration(dhzTimeout)*time.Second); err != nil {
+		return false
 	}
-	return chk
+
+	if resp.StatusCode() == 204 {
+		return true
+	}
+	return false
 }
 
 func TargetHealthChk() int {
 	log.Debug().Str("func", "TargetHealthChk").Send()
-	log.Debug().Str("chk-path", path.Join(troot, thzaddr)).Send()
-	st, _, _ := client.GetTimeout(nil, path.Join(troot, thzaddr), time.Duration(dhzTimeout)*time.Second)
-	return st
+
+	req := fasthttp.AcquireRequest()
+	resp := fasthttp.AcquireResponse()
+
+	defer func() {
+		fasthttp.ReleaseResponse(resp)
+		fasthttp.ReleaseRequest(req)
+	}()
+
+	req.SetRequestURI(path.Join(troot, thzaddr))
+
+	if err := client.DoTimeout(req, resp, time.Duration(dhzTimeout)*time.Second); err != nil {
+		return 400
+	}
+
+	return resp.StatusCode()
 }
