@@ -103,7 +103,7 @@ func DaprInitChk(d *bool) func(c *fiber.Ctx) error {
 	}
 }
 
-func TargetInitChk(d *bool) func(c *fiber.Ctx) error {
+func TargetInitChk(t *bool) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 
 		log.Debug().
@@ -112,19 +112,18 @@ func TargetInitChk(d *bool) func(c *fiber.Ctx) error {
 			Send()
 
 		log.Debug().Str("func", "TargetInitChk").
-			Bool("targetinit", *d).Send()
+			Bool("targetinit", *t).Send()
 
-		ctx := context.Background()
-		ctx = context.WithValue(ctx, "TargetChk", *d)
-		c.SetUserContext(ctx)
-
-		if *d {
+		if *t {
 			return c.SendStatus(200)
 		}
 		stat := call.TargetHealthChk()
 		chk := true
+		log.Debug().Str("func", "TargetInitChk").
+			Int("targetState", stat).Send()
+
 		if stat == 200 {
-			d = &chk
+			t = &chk
 		}
 		return c.SendStatus(stat)
 	}

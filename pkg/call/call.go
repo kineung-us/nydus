@@ -36,8 +36,7 @@ var (
 func DaprHealthChk() bool {
 	log.Debug().Str("func", "DaprHealthChk").Send()
 	chk := false
-	timeOut := time.Duration(dhzTimeout) * time.Second
-	st, _, _ := client.GetTimeout(nil, dhzaddr, timeOut)
+	st, _, _ := client.GetTimeout(nil, dhzaddr, time.Duration(dhzTimeout)*time.Second)
 	if st == 204 {
 		chk = true
 	}
@@ -46,7 +45,6 @@ func DaprHealthChk() bool {
 
 func TargetHealthChk() int {
 	log.Debug().Str("func", "TargetHealthChk").Send()
-	timeOut := time.Duration(dhzTimeout) * time.Second
-	st, _, _ := client.GetTimeout(nil, path.Join(troot, thzaddr), timeOut)
+	st, _, _ := client.GetTimeout(nil, path.Join(troot, thzaddr), time.Duration(dhzTimeout)*time.Second)
 	return st
 }
