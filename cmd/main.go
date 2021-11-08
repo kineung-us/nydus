@@ -103,7 +103,7 @@ func main() {
 			Str("SubscribeTopic", env.SubscribeTopic).
 			Str("PublishPubsub", env.PublishPubsub).
 			Str("PublishPubsubTTL", env.PublishPubsubTTL).
-			Str("TargetRoot", env.TargetRoot).
+			Str("TargetRoot", env.TargetRoot.String()).
 			Str("TargetVersion", env.TargetVersion).
 			Int("InvokeTimeout", env.InvokeTimeout).
 			Int("PublishTimeout", env.PublishTimeout).

@@ -15,7 +15,7 @@ import (
 var (
 	json = jsoniter.ConfigCompatibleWithStandardLibrary
 
-	root        = env.TargetRoot
+	root        = env.TargetRoot.String()
 	subTopic    = env.SubscribeTopic
 	serviceName = env.SubscribeTopic
 	version     = env.TargetVersion
