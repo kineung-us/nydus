@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"nydus/pkg/call"
 	"nydus/pkg/env"
 	"nydus/pkg/handler"
 	"os"
@@ -21,8 +22,7 @@ import (
 )
 
 var (
-	daprInit   = false
-	targetInit = false
+	hthzTimeout = time.Second * time.Duration(env.HealthzTimeout)
 
 	svrReadTO     = env.ServerReadTimeoutSec
 	svrWriteTO    = env.ServerWriteTimeoutSec
@@ -79,8 +79,9 @@ func main() {
 		return c.JSON(sub)
 	})
 
-	app.Use("/*", handler.DaprInitChk(&daprInit))
-	app.Get("/", handler.TargetInitChk(&targetInit))
+	app.Get("/healthz", func(c *fiber.Ctx) error {
+		return c.Status(200).SendString("OK")
+	})
 
 	app.All("/publish/:target/*", handler.PublishHandler(cst))
 	app.Post("/callback/:id", handler.CallbackHandler(cst))
@@ -90,10 +91,6 @@ func main() {
 	app.All("/*", handler.PublishHandler(cst))
 
 	go func() {
-		log.Info().Str("Server start", env.Nversion).
-			Str("Port", env.ServiceAddress).
-			Send()
-
 		log.Debug().
 			Str("stage", "env").
 			Bool("Debug", env.Debug).
@@ -108,6 +105,20 @@ func main() {
 			Int("InvokeTimeout", env.InvokeTimeout).
 			Int("PublishTimeout", env.PublishTimeout).
 			Int("CallbackTimeout", env.CallbackTimeout).
+			Send()
+
+		log.Info().Str("stage", "Target app wait").
+			Str("TargetRoot", env.TargetRoot.String()).
+			Str("TargetHealthzPath", env.TargetHealthzPath).
+			Send()
+		for {
+			st := call.TargetHealthChk()
+			if st < 400 && st >= 200 {
+				break
+			}
+		}
+		log.Info().Str("Server start", env.Nversion).
+			Str("Port", env.ServiceAddress).
 			Send()
 
 		if err := app.Listen(":" + env.ServiceAddress); err != nil {
