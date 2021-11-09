@@ -21,6 +21,7 @@ var (
 	hthzTimeout  = time.Second * time.Duration(env.HealthzTimeout)
 	troot        = env.TargetRoot
 	thzpath      = env.TargetHealthzPath
+	thzaddr      = ""
 	clHeaderNorm = env.ClientHeaderNormalizing
 
 	client = &fasthttp.Client{
@@ -32,10 +33,14 @@ var (
 	}
 )
 
-func TargetHealthChk() int {
+func init() {
 	troot.Path = path.Join(troot.Path, thzpath)
+	thzaddr = troot.String()
+}
+
+func TargetHealthChk() int {
 	log.Debug().Str("func", "TargetHealthChk").
-		Str("address", troot.String()).Send()
+		Str("address", thzaddr).Send()
 
 	req := fasthttp.AcquireRequest()
 	resp := fasthttp.AcquireResponse()
@@ -45,10 +50,9 @@ func TargetHealthChk() int {
 		fasthttp.ReleaseRequest(req)
 	}()
 
-	req.SetRequestURI(troot.String())
+	req.SetRequestURI(thzaddr)
 
 	if err := client.DoTimeout(req, resp, hthzTimeout); err != nil {
-		log.Error().Stack().Err(err).Send()
 		return 400
 	}
 
