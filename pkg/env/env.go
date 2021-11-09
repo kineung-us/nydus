@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"path"
 	"strconv"
 	"strings"
 )
@@ -24,6 +25,7 @@ var (
 
 	TargetRoot, _     = url.Parse(getEnvRequired("TARGET_ROOT"))
 	TargetHealthzPath = getEnvRequired("TARGET_HEALTHZ_PATH")
+	TargetHealthzAddr = ""
 	TargetVersion     = getEnvRequired("TARGET_VERSION")
 
 	InvokeTimeout, _   = strconv.Atoi(getEnvVar("INVOKE_TIMEOUT", "100"))
@@ -47,6 +49,12 @@ var (
 	XMLtoString, _ = strconv.ParseBool(getEnvVar("XML_TO_STRING", "true"))
 	DFTtoString, _ = strconv.ParseBool(getEnvVar("DEFAULT_TO_STRING", "false"))
 )
+
+func init() {
+	t := TargetRoot
+	t.Path = path.Join(TargetRoot.Path, TargetHealthzPath)
+	TargetHealthzAddr = t.String()
+}
 
 func getEnvVar(key, fallbackValue string) string {
 	if val, ok := os.LookupEnv(key); ok {

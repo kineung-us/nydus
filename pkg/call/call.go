@@ -2,7 +2,6 @@ package call
 
 import (
 	"nydus/pkg/env"
-	"path"
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
@@ -23,9 +22,7 @@ var (
 	dhzaddr    = env.DaprHealthzAddr
 	dhzTimeout = env.DaprHealthzTimeout
 
-	troot   = env.TargetRoot
-	thzpath = env.TargetHealthzPath
-	thzaddr = ""
+	thzaddr = env.TargetHealthzAddr
 
 	clHeaderNorm = env.ClientHeaderNormalizing
 
@@ -37,11 +34,6 @@ var (
 		DisableHeaderNamesNormalizing: !clHeaderNorm,
 	}
 )
-
-func init() {
-	troot.Path = path.Join(troot.Path, thzpath)
-	thzaddr = troot.String()
-}
 
 func DaprHealthChk() bool {
 	log.Debug().Str("func", "DaprHealthChk").Send()
