@@ -78,7 +78,9 @@ func main() {
 		log.Info().Interface("sub", sub).Send()
 		return c.JSON(sub)
 	})
-
+	app.Get("/", func(c *fiber.Ctx) error {
+		return c.Status(200).SendString("OK")
+	})
 	app.Get("/healthz", func(c *fiber.Ctx) error {
 		return c.Status(200).SendString("OK")
 	})
