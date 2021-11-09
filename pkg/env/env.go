@@ -31,6 +31,9 @@ var (
 	CallbackTimeout, _ = strconv.Atoi(getEnvVar("CALLBACK_TIMEOUT", "10"))
 	HealthzTimeout, _  = strconv.Atoi(getEnvVar("HEALTHZ_TIMEOUT", "1"))
 
+	DaprHealthzAddr       = getEnvVar("DAPR_HEALTHZ_ADDR", "http://localhost:3500/v1.0/healthz")
+	DaprHealthzTimeout, _ = strconv.Atoi(getEnvVar("DAPR_HEALTHZ_TIMEOUT", "5"))
+
 	ClientMaxConnsPerHost, _   = strconv.Atoi(getEnvVar("CLIENT_MAX_CONNS_PER_HOST", "10000"))
 	ClientReadTimeoutSec, _    = strconv.Atoi(getEnvVar("CLIENT_READ_TIMEOUT", "100"))
 	ClientWriteTimeoutSec, _   = strconv.Atoi(getEnvVar("CLIENT_WRITE_TIMEOUT", "10"))

@@ -1,7 +1,9 @@
 package handler
 
 import (
+	"context"
 	"nydus/pkg/body"
+	"nydus/pkg/call"
 	"nydus/pkg/env"
 
 	"github.com/gofiber/fiber/v2"
@@ -75,6 +77,30 @@ func LogHandler(c *fiber.Ctx) error {
 		Interface("request", b).
 		Send()
 	return c.SendStatus(204)
+}
+
+func DaprInitChk(d *bool) func(c *fiber.Ctx) error {
+	return func(c *fiber.Ctx) error {
+
+		log.Debug().
+			Str("stage", "daprinit-start").
+			Str("body", string(c.Body())).
+			Send()
+
+		log.Debug().Str("func", "DaprInitChk").
+			Bool("daprinit", *d).Send()
+
+		ctx := context.Background()
+		ctx = context.WithValue(ctx, "daprChk", *d)
+		c.SetUserContext(ctx)
+
+		if *d {
+			return c.Next()
+		}
+		chk := call.DaprHealthChk()
+		d = &chk
+		return c.Next()
+	}
 }
 
 func getStatus(c *fiber.Ctx) string {
