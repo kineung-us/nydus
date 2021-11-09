@@ -80,7 +80,7 @@ func main() {
 	})
 
 	app.Use("/*", handler.DaprInitChk(&daprInit))
-	app.Get("/healthz", handler.TargetInitChk(&targetInit))
+	app.Get("/", handler.TargetInitChk(&targetInit))
 
 	app.All("/publish/:target/*", handler.PublishHandler(cst))
 	app.Post("/callback/:id", handler.CallbackHandler(cst))
