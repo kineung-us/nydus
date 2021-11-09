@@ -10,34 +10,18 @@ import (
 	"nydus/pkg/call"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/proxy"
 	"github.com/guiguan/caster"
 	"github.com/rs/zerolog/log"
 )
 
 func PublishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
-		ctx := c.UserContext()
 
 		log.Debug().
 			Str("stage", "publish-start").
 			Str("body", string(c.Body())).
 			Send()
 
-		log.Debug().Str("func", "PublishHandler").
-			Bool("daprinit", ctx.Value("daprChk").(bool)).Send()
-		if !ctx.Value("daprChk").(bool) {
-			log.Debug().Str("func", "ProxyHandler").Send()
-			url := root + "/" + c.Params("*")
-			if err := proxy.Do(c, url); err != nil {
-				return err
-			}
-			// Remove Server header from response
-			c.Response().Header.Del(fiber.HeaderServer)
-			return nil
-		}
-
-		log.Debug().Str("func", "PublishHandler").Send()
 		before := time.Now()
 
 		// set headers

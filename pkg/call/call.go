@@ -52,5 +52,8 @@ func TargetHealthChk() int {
 		return 400
 	}
 
+	log.Debug().Str("func", "TargetHealthChk").
+		Int("return", resp.StatusCode()).Send()
+
 	return resp.StatusCode()
 }
