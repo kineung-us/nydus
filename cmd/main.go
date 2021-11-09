@@ -116,6 +116,7 @@ func main() {
 			if st < 400 && st >= 200 {
 				break
 			}
+			time.Sleep(hthzTimeout)
 		}
 		log.Info().Str("Server start", env.Nversion).
 			Str("Port", env.ServiceAddress).

@@ -39,9 +39,6 @@ func init() {
 }
 
 func TargetHealthChk() int {
-	log.Debug().Str("func", "TargetHealthChk").
-		Str("address", thzaddr).Send()
-
 	req := fasthttp.AcquireRequest()
 	resp := fasthttp.AcquireResponse()
 
