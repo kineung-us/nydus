@@ -51,7 +51,7 @@ var (
 )
 
 func init() {
-	t := TargetRoot
+	t := *TargetRoot
 	t.Path = path.Join(TargetRoot.Path, TargetHealthzPath)
 	TargetHealthzAddr = t.String()
 }
