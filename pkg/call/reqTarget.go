@@ -2,7 +2,6 @@ package call
 
 import (
 	"strings"
-	"time"
 
 	"nydus/pkg/body"
 
@@ -36,9 +35,7 @@ func RequesttoTarget(in *body.RequestedData) (out *body.ResponseData, err error)
 		req.SetBody(b)
 	}
 
-	timeOut := time.Duration(ivkTimeout) * time.Second
-
-	if err := client.DoTimeout(req, resp, timeOut); err != nil {
+	if err := client.DoTimeout(req, resp, ivkTimeout); err != nil {
 		return nil, err
 	}
 

@@ -5,6 +5,7 @@ import (
 	"nydus/pkg/body"
 	"nydus/pkg/call"
 	"nydus/pkg/env"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/guiguan/caster"
@@ -21,6 +22,8 @@ var (
 	version     = env.TargetVersion
 	port        = env.ServiceAddress
 	IP          = env.ServiceIP
+
+	ivkTimeout = time.Duration(env.InvokeTimeout) * time.Second
 )
 
 func CallbackHandler(cst *caster.Caster) func(c *fiber.Ctx) error {

@@ -15,7 +15,7 @@ var (
 	ppubsub     = env.PublishPubsub
 	ttl         = env.PublishPubsubTTL
 	pubTimeout  = env.PublishTimeout
-	ivkTimeout  = env.InvokeTimeout
+	ivkTimeout  = time.Duration(env.InvokeTimeout) * time.Second
 	cbTimeout   = env.CallbackTimeout
 	hthzTimeout = time.Second * time.Duration(env.HealthzTimeout)
 

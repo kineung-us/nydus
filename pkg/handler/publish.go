@@ -26,6 +26,7 @@ func PublishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 
 		log.Debug().Str("func", "PublishHandler").
 			Bool("daprinit", ctx.Value("daprChk").(bool)).Send()
+
 		if !ctx.Value("daprChk").(bool) {
 			log.Debug().Str("func", "ProxyHandler").Send()
 			url := root + "/" + c.Params("*")
@@ -91,20 +92,24 @@ func PublishHandler(cst *caster.Caster) func(c *fiber.Ctx) error {
 
 		ch, ok := cst.Sub(context.TODO(), 1)
 		if !ok {
-			// https://docs.gofiber.io/api/fiber#newerror
 			return fiber.NewError(782, "publishHandler: Caster subscription failed")
 		}
 		defer cst.Unsub(ch)
 
 		rm := body.Message{}
 
+		start := time.Now()
 		for m := range ch {
 			t := m.(body.Message).ID
 			if ce.ID.String() == t {
 				rm = m.(body.Message)
 				break
 			}
+			if time.Since(start) > ivkTimeout {
+				return fiber.NewError(780, "publishHandler: Caster subscription timeout")
+			}
 		}
+
 		for k, v := range rm.Headers {
 			c.Set(k, v)
 		}

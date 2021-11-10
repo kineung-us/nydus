@@ -35,11 +35,16 @@ func InvokeHandler(c *fiber.Ctx) error {
 		log.Error().Stack().Err(err).Send()
 		return fiber.NewError(500, "invokeHandler: UpdateHost Method failed. Err:", err.Error())
 	}
+
 	ce.PropTrace()
 
 	out, err := call.RequesttoTarget(ce.Data.Order)
 	if err != nil {
 		out = &body.ResponseData{
+			Status: 500,
+			Headers: map[string]string{
+				"Content-Type": "application/json",
+			},
 			Body: []byte(err.Error()),
 		}
 	}
