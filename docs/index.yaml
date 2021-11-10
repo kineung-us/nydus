@@ -2,8 +2,21 @@ apiVersion: v1
 entries:
   nydus:
   - apiVersion: v2
+    appVersion: 0.2.11
+    created: "2021-11-10T09:01:34.658674658Z"
+    description: A Helm chart for nydus standalone mode for k8s
+    digest: 85fcaeb25913ed334c01f0e7faf8cb206f3599ed364e96616c0139f1d461e46f
+    maintainers:
+    - email: mrchypark@gmail.com
+      name: Chanyub.Park
+    name: nydus
+    type: application
+    urls:
+    - https://kineung-us.github.io/nydus/nydus-0.2.11.tgz
+    version: 0.2.11
+  - apiVersion: v2
     appVersion: 0.2.10
-    created: "2021-11-09T10:02:28.101436177Z"
+    created: "2021-11-10T09:01:34.658012057Z"
     description: A Helm chart for nydus standalone mode for k8s
     digest: 2cd14daf027c1a8641c2b05823fe1f06f99b3f6c8ecaec49ac93823996b3bf3e
     maintainers:
@@ -16,7 +29,7 @@ entries:
     version: 0.2.10
   - apiVersion: v2
     appVersion: 0.2.9
-    created: "2021-11-09T10:02:28.107778073Z"
+    created: "2021-11-10T09:01:34.665547069Z"
     description: A Helm chart for nydus standalone mode for k8s
     digest: aa4ee8aa3615d42a91b1f156bac5dee479f0419aa1cf89d810d338582923e49b
     maintainers:
@@ -29,7 +42,7 @@ entries:
     version: 0.2.9
   - apiVersion: v2
     appVersion: 0.2.8
-    created: "2021-11-09T10:02:28.107084652Z"
+    created: "2021-11-10T09:01:34.664888768Z"
     description: A Helm chart for nydus standalone mode for k8s
     digest: 73778dd6385771cd27de0025840ff635eedb644aceba2814ab09df9e6c710dee
     maintainers:
@@ -42,7 +55,7 @@ entries:
     version: 0.2.8
   - apiVersion: v2
     appVersion: 0.2.7
-    created: "2021-11-09T10:02:28.106397731Z"
+    created: "2021-11-10T09:01:34.664287267Z"
     description: A Helm chart for nydus standalone mode for k8s
     digest: a9ab0d1cc67b7b014f6b37cafed57ad6141b7d5777959e32937be3fe349948b2
     maintainers:
@@ -55,7 +68,7 @@ entries:
     version: 0.2.7
   - apiVersion: v2
     appVersion: 0.2.6
-    created: "2021-11-09T10:02:28.105706309Z"
+    created: "2021-11-10T09:01:34.663648666Z"
     description: A Helm chart for nydus standalone mode for k8s
     digest: 0d680efa01fc46e70094f5d97e9adaea700fa5708007ebf664a1b3a1fbaa1f14
     maintainers:
@@ -68,7 +81,7 @@ entries:
     version: 0.2.6
   - apiVersion: v2
     appVersion: 0.2.5
-    created: "2021-11-09T10:02:28.105023088Z"
+    created: "2021-11-10T09:01:34.662577064Z"
     description: A Helm chart for nydus standalone mode for k8s
     digest: 6944c62b375cee0e87ee806d2082e967c4ed6a6507d6d5b514beb448eaabbc61
     maintainers:
@@ -81,7 +94,7 @@ entries:
     version: 0.2.5
   - apiVersion: v2
     appVersion: 0.2.4
-    created: "2021-11-09T10:02:28.104297166Z"
+    created: "2021-11-10T09:01:34.661681563Z"
     description: A Helm chart for nydus standalone mode for k8s
     digest: e72695dedf88533f10b8c8a4cfdf9c0a25f7b6d2435e53b2a4cecd9cfa7e4196
     maintainers:
@@ -94,7 +107,7 @@ entries:
     version: 0.2.4
   - apiVersion: v2
     appVersion: 0.2.3
-    created: "2021-11-09T10:02:28.103603144Z"
+    created: "2021-11-10T09:01:34.660566061Z"
     description: A Helm chart for nydus standalone mode for k8s
     digest: 95ef8e89d9e9d6c04fea26f97943812ec6719f03ab653cd84bfcd2a2a1b70b6a
     maintainers:
@@ -107,7 +120,7 @@ entries:
     version: 0.2.3
   - apiVersion: v2
     appVersion: 0.2.2
-    created: "2021-11-09T10:02:28.102896322Z"
+    created: "2021-11-10T09:01:34.65994036Z"
     description: A Helm chart for nydus standalone mode for k8s
     digest: 1b7c305005ed20372ef0f104d05a529b444079e2b56bc5ba3edefd812698f798
     maintainers:
@@ -120,7 +133,7 @@ entries:
     version: 0.2.2
   - apiVersion: v2
     appVersion: 0.2.2-log
-    created: "2021-11-09T10:02:28.102126898Z"
+    created: "2021-11-10T09:01:34.659310459Z"
     description: A Helm chart for nydus standalone mode for k8s
     digest: 55d54e9084595eaad054dfac2fd8d9958e67939540e94ab463c6a13541101831
     maintainers:
@@ -133,7 +146,7 @@ entries:
     version: 0.2.2-log
   - apiVersion: v2
     appVersion: 0.2.1
-    created: "2021-11-09T10:02:28.100739955Z"
+    created: "2021-11-10T09:01:34.657411356Z"
     description: A Helm chart for nydus standalone mode for k8s
     digest: f49e739d0f4559d3da13bda0e60d20b1f6460dfeaf62591ab764bab09e4d2b1f
     maintainers:
@@ -146,7 +159,7 @@ entries:
     version: 0.2.1
   - apiVersion: v2
     appVersion: 0.2.1-log
-    created: "2021-11-09T10:02:28.100006333Z"
+    created: "2021-11-10T09:01:34.656792555Z"
     description: A Helm chart for nydus standalone mode for k8s
     digest: 82316c6e789b533568e54bff8f078a1253d1d02feda3c4b578c1e153a583187d
     maintainers:
@@ -159,7 +172,7 @@ entries:
     version: 0.2.1-log
   - apiVersion: v2
     appVersion: 0.2.0
-    created: "2021-11-09T10:02:28.09928581Z"
+    created: "2021-11-10T09:01:34.656151354Z"
     description: A Helm chart for nydus standalone mode for k8s
     digest: a1d2d1a0d7f24d45a965d35b494c52fa5f73fbcb740debb66118e7e53e2c6214
     maintainers:
@@ -172,7 +185,7 @@ entries:
     version: 0.2.0
   - apiVersion: v2
     appVersion: 0.1.29
-    created: "2021-11-09T10:02:28.089781616Z"
+    created: "2021-11-10T09:01:34.651956747Z"
     description: A Helm chart for nydus standalone mode for k8s
     digest: 6953ea44fee0907f1724c8dbcb2d921a30b6dd8ddbfaff7e31470ba43355e63f
     maintainers:
@@ -185,7 +198,7 @@ entries:
     version: 0.1.29
   - apiVersion: v2
     appVersion: 0.1.28
-    created: "2021-11-09T10:02:28.088916489Z"
+    created: "2021-11-10T09:01:34.650266444Z"
     description: A Helm chart for nydus standalone mode for k8s
     digest: 98713b101f42ad56eacf79512db10398af37f6644d38f9bace364b6a90cc5e43
     maintainers:
@@ -198,7 +211,7 @@ entries:
     version: 0.1.28
   - apiVersion: v2
     appVersion: 0.1.27
-    created: "2021-11-09T10:02:28.08799856Z"
+    created: "2021-11-10T09:01:34.649070442Z"
     description: A Helm chart for nydus standalone mode for k8s
     digest: 74c52919cec7f1e6202223755dbb70621f401d244b7563612010e81ac9dd686b
     maintainers:
@@ -211,7 +224,7 @@ entries:
     version: 0.1.27
   - apiVersion: v2
     appVersion: 0.1.26
-    created: "2021-11-09T10:02:28.087397542Z"
+    created: "2021-11-10T09:01:34.648636142Z"
     description: A Helm chart for nydus standalone mode for k8s
     digest: 067cf6720465ff9cb8bf62fe956ea0ebe7851998c71fde38baabde2f18c579a4
     maintainers:
@@ -224,7 +237,7 @@ entries:
     version: 0.1.26
   - apiVersion: v2
     appVersion: 0.1.25
-    created: "2021-11-09T10:02:28.086831524Z"
+    created: "2021-11-10T09:01:34.648193041Z"
     description: A Helm chart for nydus standalone mode for k8s
     digest: 4f04cd7350dfa28bb2e6943ee7b428b17cd17410e7d23539d61541ce2997ddad
     maintainers:
@@ -237,7 +250,7 @@ entries:
     version: 0.1.25
   - apiVersion: v2
     appVersion: 0.1.24
-    created: "2021-11-09T10:02:28.086244806Z"
+    created: "2021-11-10T09:01:34.64774534Z"
     description: A Helm chart for nydus standalone mode for k8s
     digest: da057527d84f182a745db01e8fd59b11558f8ec3bbba6aab508f73fb9ddaa821
     maintainers:
@@ -250,7 +263,7 @@ entries:
     version: 0.1.24
   - apiVersion: v2
     appVersion: 0.1.23
-    created: "2021-11-09T10:02:28.085669888Z"
+    created: "2021-11-10T09:01:34.647261039Z"
     description: A Helm chart for nydus standalone mode for k8s
     digest: d352b2a59d81f404877fca05e079097ed2e1297ab165909d8cc920d6752c2c8e
     maintainers:
@@ -263,7 +276,7 @@ entries:
     version: 0.1.23
   - apiVersion: v2
     appVersion: 0.1.22
-    created: "2021-11-09T10:02:28.08508657Z"
+    created: "2021-11-10T09:01:34.646823539Z"
     description: A Helm chart for nydus standalone mode for k8s
     digest: 7f5dc1c5cf6d960f69e95e2af5f04771cd4b61b04e2336d024e0127dabaa1d67
     maintainers:
@@ -276,7 +289,7 @@ entries:
     version: 0.1.22
   - apiVersion: v2
     appVersion: 0.1.21
-    created: "2021-11-09T10:02:28.084465351Z"
+    created: "2021-11-10T09:01:34.646392338Z"
     description: A Helm chart for nydus standalone mode for k8s
     digest: c3aef3e2bd97b3fb9b5225ce89e392caf43bdf1f298e87f3f65adefcefc5e1fa
     maintainers:
@@ -289,7 +302,7 @@ entries:
     version: 0.1.21
   - apiVersion: v2
     appVersion: 0.1.20
-    created: "2021-11-09T10:02:28.083833931Z"
+    created: "2021-11-10T09:01:34.645940837Z"
     description: A Helm chart for nydus standalone mode for k8s
     digest: 1d7b05989e7adcb0d9f884df33eefffe57b3dd9b6deb33121d6227c24c3b9467
     maintainers:
@@ -302,7 +315,7 @@ entries:
     version: 0.1.20
   - apiVersion: v2
     appVersion: 0.1.19
-    created: "2021-11-09T10:02:28.083242513Z"
+    created: "2021-11-10T09:01:34.645495037Z"
     description: A Helm chart for nydus standalone mode for k8s
     digest: 156ebaf1b47382b324249b07589f365bd1d0ac205178846dcac61a970b9f016a
     maintainers:
@@ -315,7 +328,7 @@ entries:
     version: 0.1.19
   - apiVersion: v2
     appVersion: 0.1.18
-    created: "2021-11-09T10:02:28.082653695Z"
+    created: "2021-11-10T09:01:34.645041536Z"
     description: A Helm chart for nydus standalone mode for k8s
     digest: 3f6e46acbe20610e86771402d690e3ed4941ce63bfae9fbaba2d5051b8fd19bb
     maintainers:
@@ -328,7 +341,7 @@ entries:
     version: 0.1.18
   - apiVersion: v2
     appVersion: 0.1.17
-    created: "2021-11-09T10:02:28.081993574Z"
+    created: "2021-11-10T09:01:34.644582235Z"
     description: A Helm chart for nydus standalone mode for k8s
     digest: 03416cb5ea3d5107721efd3ede420ab92442577e29a82523931a0037de096be5
     maintainers:
@@ -341,7 +354,7 @@ entries:
     version: 0.1.17
   - apiVersion: v2
     appVersion: 0.1.16
-    created: "2021-11-09T10:02:28.081060845Z"
+    created: "2021-11-10T09:01:34.644130234Z"
     description: A Helm chart for nydus standalone mode for k8s
     digest: ebea2a1f63409629c425ffb8f09a3458a8c36124fe66ba1eb557048edef1fe9f
     maintainers:
@@ -354,7 +367,7 @@ entries:
     version: 0.1.16
   - apiVersion: v2
     appVersion: 0.1.15
-    created: "2021-11-09T10:02:28.080220519Z"
+    created: "2021-11-10T09:01:34.643666034Z"
     description: A Helm chart for nydus standalone mode for k8s
     digest: df4ebd96a4adaf1b5316d4cb422d1e47811767ab14c803d4b2d9b9190db3187a
     maintainers:
@@ -367,7 +380,7 @@ entries:
     version: 0.1.15
   - apiVersion: v2
     appVersion: 0.1.14
-    created: "2021-11-09T10:02:28.079128285Z"
+    created: "2021-11-10T09:01:34.643192133Z"
     description: A Helm chart for nydus standalone mode for k8s
     digest: 2b11c203cde3e7e6e6d6648081a39a63cb7dbce27e65b5a15e021ad5a3a5ad4d
     maintainers:
@@ -380,7 +393,7 @@ entries:
     version: 0.1.14
   - apiVersion: v2
     appVersion: 0.1.13
-    created: "2021-11-09T10:02:28.078547067Z"
+    created: "2021-11-10T09:01:34.642732732Z"
     description: A Helm chart for nydus standalone mode for k8s
     digest: 0c49d90dbb64d3924ce3c446357f7ddb78a544e63838aa82971a171848bd9b6c
     maintainers:
@@ -393,7 +406,7 @@ entries:
     version: 0.1.13
   - apiVersion: v2
     appVersion: 0.1.12
-    created: "2021-11-09T10:02:28.077967249Z"
+    created: "2021-11-10T09:01:34.642268531Z"
     description: A Helm chart for nydus standalone mode for k8s
     digest: 18fc84e9168b1fded9b86e8fa06431d6a7a2d4e1002ab5b376e41435bb673055
     maintainers:
@@ -406,7 +419,7 @@ entries:
     version: 0.1.12
   - apiVersion: v2
     appVersion: 0.1.11
-    created: "2021-11-09T10:02:28.077373731Z"
+    created: "2021-11-10T09:01:34.641800131Z"
     description: A Helm chart for nydus standalone mode for k8s
     digest: e4413d9ba964bb64ebb0cf2c720cdb0dc2bdb199f1263fd391d8f2d32887988b
     maintainers:
@@ -419,7 +432,7 @@ entries:
     version: 0.1.11
   - apiVersion: v2
     appVersion: 0.1.10
-    created: "2021-11-09T10:02:28.076767312Z"
+    created: "2021-11-10T09:01:34.64129783Z"
     description: A Helm chart for nydus standalone mode for k8s
     digest: cadbd02df2be41d8cd073637ac20fbc3fcea656150eb7e88e98c15f32fb60565
     maintainers:
@@ -432,7 +445,7 @@ entries:
     version: 0.1.10
   - apiVersion: v2
     appVersion: 0.1.9
-    created: "2021-11-09T10:02:28.098384282Z"
+    created: "2021-11-10T09:01:34.655545953Z"
     description: A Helm chart for Kubernetes
     digest: a1411d529e5905cd73461b5dabcfee1b21aae59ca8c906f6711966eea47f6003
     name: nydus
@@ -442,7 +455,7 @@ entries:
     version: 0.1.9
   - apiVersion: v2
     appVersion: 0.1.8
-    created: "2021-11-09T10:02:28.096084011Z"
+    created: "2021-11-10T09:01:34.655031052Z"
     description: A Helm chart for Kubernetes
     digest: a729e7b4c30c0cf9bd5d5356490a65f378e5a411cf286abe8e1ccf16d162414b
     name: nydus
@@ -452,7 +465,7 @@ entries:
     version: 0.1.8
   - apiVersion: v2
     appVersion: 0.1.7
-    created: "2021-11-09T10:02:28.094628766Z"
+    created: "2021-11-10T09:01:34.654514551Z"
     description: A Helm chart for Kubernetes
     digest: c2bf1c752a63c766c2bec2f9965289a5225662e024e982598e5086f5bcd270c0
     name: nydus
@@ -462,7 +475,7 @@ entries:
     version: 0.1.7
   - apiVersion: v2
     appVersion: 0.1.6
-    created: "2021-11-09T10:02:28.093757539Z"
+    created: "2021-11-10T09:01:34.65398935Z"
     description: A Helm chart for Kubernetes
     digest: 24702e4bb729eea705eee953c6c63604e904999f66598865835c0953d3f205cb
     name: nydus
@@ -472,7 +485,7 @@ entries:
     version: 0.1.6
   - apiVersion: v2
     appVersion: 0.1.5
-    created: "2021-11-09T10:02:28.092781509Z"
+    created: "2021-11-10T09:01:34.653506549Z"
     description: A Helm chart for Kubernetes
     digest: eb858d62dacf50269ba85c8c7fde9cb6ee6a8198e782a6d8ed5d808e2ac06080
     name: nydus
@@ -482,7 +495,7 @@ entries:
     version: 0.1.5
   - apiVersion: v2
     appVersion: 0.1.4
-    created: "2021-11-09T10:02:28.091458868Z"
+    created: "2021-11-10T09:01:34.653024749Z"
     description: A Helm chart for Kubernetes
     digest: 83c3fe849ee2f7bc28948206f2486a37114dc6389290d695382ea01930d6b492
     name: nydus
@@ -492,7 +505,7 @@ entries:
     version: 0.1.4
   - apiVersion: v2
     appVersion: 0.1.3
-    created: "2021-11-09T10:02:28.090629342Z"
+    created: "2021-11-10T09:01:34.652495148Z"
     description: A Helm chart for Kubernetes
     digest: 19aab98cbaab889aca308917041c756d719a9e384964c7aa48c75f7ca9b6fe67
     name: nydus
@@ -500,4 +513,4 @@ entries:
     urls:
     - https://kineung-us.github.io/nydus/nydus-0.1.3.tgz
     version: 0.1.3
-generated: "2021-11-09T10:02:28.075953487Z"
+generated: "2021-11-10T09:01:34.639704627Z"
